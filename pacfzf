@@ -1,0 +1,3 @@
+#!/bin/bash
+
+pacman -Sl | awk '{print $2($4=="" ? "" : " *")}'| fzf -e -m --preview 'cat <(pacman -Si {1}) <(pacman -Fl {1} | awk "{print \$2}")' --layout=reverse | xargs -ro -n1 sudo pacman -S 
