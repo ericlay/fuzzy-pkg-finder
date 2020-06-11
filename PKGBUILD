@@ -10,7 +10,7 @@ depends=('pacman'
     'yay'
     'fzf')
 makedepends=('git')
-#install= TODO add post install script to sync pacman file database.
+install=$pkgname.install
 source=("git://github.com/ericlay/$pkgname")
 md5sums=('SKIP')
 
