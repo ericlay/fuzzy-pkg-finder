@@ -4,14 +4,14 @@ pkgver=0.1
 pkgrel=1
 pkgdesc="Simple cli command for using fzf to search and install packages"
 arch=(any)
-url="https://gitlab.com/airclay/$pkgname"
+url="https://github.com/ericlay/$pkgname"
 license=('GPL')
 depends=('pacman'
-		'yay'
-		'fzf')
+    'yay'
+    'fzf')
 makedepends=('git')
 #install= TODO add post install script to sync pacman file database.
-source=("git://gitlab.com/airclay/$pkgname")
+source=("git://github.com/ericlay/$pkgname")
 md5sums=('SKIP')
 
 package() {
