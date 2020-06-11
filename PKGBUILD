@@ -17,6 +17,6 @@ md5sums=('SKIP')
 package() {
 	cd "$srcdir"
 	install -dm755 $pkgdir/usr/bin
-	cp -r $scrdir/$pkgname/bin $pkgdir/usr
+	cp -r $srcdir/$pkgname/bin $pkgdir/usr
 	chmod a+x $pkgdir/usr/bin/*
 }
