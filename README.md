@@ -23,5 +23,5 @@ sudo systemctl start fpf.service fpf.timer
 ```
  \
 Usage: \
-Use by invoking pacfzf or yayfzf to search the respective repositories.
+Invoke `pacfzf` or `yayfzf` commands to search the respective repositories.
 
