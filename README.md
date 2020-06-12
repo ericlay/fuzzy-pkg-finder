@@ -4,5 +4,5 @@
  \
 Performs live search by package name and presents package information including file list in preview pane.\
 Use by invoking 'pacfzf' or 'yayfzf' commands\
-*For use with Pacman or Yay package managers only.*
+*For use with Pacman or Yay package managers only.*\
 *Entirely inspired by command found at https://wiki.archlinux.org/index.php/Fzf*
