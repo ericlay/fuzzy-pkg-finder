@@ -8,3 +8,4 @@ Target = fuzzy-pkg-finder
 Description = Syncing file database...
 When = PostTransaction
 Exec = /bin/sh -c 'pacman -Fy && yay -Fy'
+NeedsTargets
