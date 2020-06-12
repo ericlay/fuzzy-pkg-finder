@@ -4,4 +4,4 @@ Description=Sync files database
 [Service]
 Type=oneshot
 User=root
-ExecStart=/usr/bin/sh -c 'pacman -Fy && yay -Fy'
+ExecStart=/usr/bin/sh -c 'pacman -Fy'
