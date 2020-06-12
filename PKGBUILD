@@ -10,7 +10,6 @@ depends=('pacman'
     'yay'
     'fzf')
 makedepends=('git')
-install=$pkgname.install
 source=("git://github.com/ericlay/$pkgname")
 md5sums=('SKIP')
 
@@ -19,4 +18,6 @@ package() {
 	install -dm755 $pkgdir/usr/bin
 	cp -r $srcdir/$pkgname/bin $pkgdir/usr
 	chmod a+x $pkgdir/usr/bin/*
+	install -dm755 "$pkgdir"/usr/share/libalpm/hooks/
+	install -m644 fuzzy-pkg-finder.hook "$pkgdir"/usr/share/libalpm/hooks/
 }
