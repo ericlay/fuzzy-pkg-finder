@@ -1,5 +1,5 @@
 [Trigger]
-Type = Path
+Type = Package
 Operation = Install
 Operation = Upgrade
 Target = fuzzy-pkg-finder
