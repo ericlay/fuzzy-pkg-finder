@@ -19,5 +19,5 @@ package() {
 	cp -r $srcdir/$pkgname/bin $pkgdir/usr
 	chmod a+x $pkgdir/usr/bin/*
 	install -dm755 "$pkgdir"/usr/share/libalpm/hooks/
-	install -m644 fuzzy-pkg-finder.hook "$pkgdir"/usr/share/libalpm/hooks/
+	install -m644 $srcdir/$pkgname/fuzzy-pkg-finder.hook "$pkgdir"/usr/share/libalpm/hooks/
 }
