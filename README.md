@@ -23,5 +23,5 @@ sudo systemctl start fpf.service fpf.timer
 ```
  \
 Usage: \
-Invoke `pacfzf` or `yayfzf` commands to search the respective repositories.
+Invoke `pacfzf` or `yayfzf` commands to search the respective repositories. Press 'Enter' key to select desired package. Follow Pacman/Yay instructions to complete install.
 
