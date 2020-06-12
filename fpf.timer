@@ -1,0 +1,8 @@
+[Unit]
+Description=Periodically sync files database
+
+[Timer]
+OnUnitInactiveSec=24hours
+
+[Install]
+WantedBy=multi-user.target
