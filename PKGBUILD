@@ -10,7 +10,7 @@ depends=('pacman'
     'yay'
     'fzf')
 makedepends=('git')
-source=("git://github.com/ericlay/$pkgname#tag=$pkgver")
+source=("git+https://gitlab.com/airclay/fuzzy-pkg-finder.git#tag=$pkgver")
 md5sums=('SKIP')
 
 package() {
