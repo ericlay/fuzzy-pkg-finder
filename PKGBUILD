@@ -16,7 +16,7 @@ md5sums=('SKIP')
 package() {
 	cd "$srcdir"
 	install -dm755 $pkgdir/usr/bin
-	cp -r $pkgname/fpf $pkgdir/usr/bin/
+	cp -r $srcdir/$pkgname/fpf $pkgdir/usr/bin/
 	chmod a+x $pkgdir/usr/bin/*
 	install -dm755 "$pkgdir"/usr/lib/systemd/system/
 	install -m644 $srcdir/$pkgname/fpf.{service,timer} "$pkgdir"/usr/lib/systemd/system/
