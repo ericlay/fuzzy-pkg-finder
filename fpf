@@ -1,0 +1,39 @@
+#!/usr/bin/bash
+
+
+### Help 
+
+Help() {
+   echo
+   echo "Use fzf to search and install with Pacman and Yay"
+   echo "Defaults to Pacman if no options passed"
+   echo
+   echo "Syntax: fpf -[y|h]"
+   echo
+   echo "options:"
+   echo
+   echo "y     Search and install with Yay"
+   echo
+   echo "h     Print this help screen."
+   echo
+   echo
+}
+
+### MAIN 
+
+while getopts ":yh" option; do
+   case $option in
+
+      y) yay -Sl | awk '{print $2($4=="" ? "" : " *")}'| fzf -e -m --preview  'cat <(yay -Si {1}) <(yay -Fl {1} | awk "{print \$2}")' --layout=reverse | xargs -ro -n1 yay -S 
+         exit;;
+
+      h) Help
+         exit;;
+
+     \?) echo "Error: Invalid option"
+         exit;;
+
+   esac
+done
+
+pacman -Sl | awk '{print $2($4=="" ? "" : " *")}'| fzf -e -m --preview 'cat <(pacman -Si {1}) <(pacman -Fl {1} | awk "{print \$2}")' --layout=reverse | xargs -ro -n1 sudo pacman -S
