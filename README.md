@@ -22,7 +22,7 @@ sudo systemctl enable fpf.timer fpf.service
 sudo systemctl start fpf.service fpf.timer
 ```
  \
-Usage: \
+Usage: 
 ```
 Syntax: fpf -[y|h]
 Defaults to Pacman if no options passed
