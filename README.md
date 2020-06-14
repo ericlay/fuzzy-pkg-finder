@@ -9,7 +9,7 @@ Includes fpf systemd timer to keep files database up to date automagically.
 *Entirely inspired by command found at https://wiki.archlinux.org/index.php/Fzf* \
  \
 Installation: 
-```bash
+```
 git clone https://github.com/ericlay/fuzzy-pkg-finder
 cd fuzzy-pkg-finder
 makepkg
@@ -17,18 +17,17 @@ sudo pacman -U fuzzy-pkg-finder-0.3-1-any.pkg.tar.xz
 ```
  \
 After installation completes:
-```bash
+```
 sudo systemctl enable fpf.timer fpf.service
 sudo systemctl start fpf.service fpf.timer
 ```
  \
 Usage: \
- \
-Syntax: fpf -[y|h] \
-Defaults to Pacman if no options passed \
- \
-options: \
- \
-y     Search and install with Yay \
- \
-h     Print this help screen. \
+```
+Syntax: fpf -[y|h]
+Defaults to Pacman if no options passed
+
+options:
+-y	Search and install with Yay
+-h	Print this help screen
+```
