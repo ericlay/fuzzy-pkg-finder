@@ -2,7 +2,7 @@
 
 **Simple cli command for using fzf to search and install packages.**\
  \
-Performs live search by package name and presents package information including file list in preview pane. \
+Leverages the power of fzf to search package names and presents complete package information in preview pane. On selection will hand off to Pacman or Yay to complete transaction. \
 Includes fpf systemd timer to keep files database up to date automagically. 
   \
 *For use with Pacman or Yay package managers only.*\
@@ -13,7 +13,7 @@ Installation:
 git clone https://github.com/ericlay/fuzzy-pkg-finder
 cd fuzzy-pkg-finder
 makepkg
-sudo pacman -U fuzzy-pkg-finder-0.1-1-any.pkg.tar.xz 
+sudo pacman -U fuzzy-pkg-finder-0.3-1-any.pkg.tar.xz 
 ```
  \
 After installation completes:
@@ -23,5 +23,12 @@ sudo systemctl start fpf.service fpf.timer
 ```
  \
 Usage: \
-Invoke `pacfzf` or `yayfzf` commands to search the respective repositories. Press 'Enter' key to select desired package. Follow Pacman/Yay instructions to complete install.
-
+ \
+Syntax: fpf -[y|h] \
+Defaults to Pacman if no options passed \
+ \
+options: \
+ \
+y     Search and install with Yay \
+ \
+h     Print this help screen. \
