@@ -4,7 +4,6 @@
  \
 Leverages the power of fzf to search package names and presents complete package information in preview pane. \
 On selection will hand off to Pacman or Yay to complete transaction. \
-Includes fpf systemd timer to keep files database up to date automagically. 
   \
 *For use with Pacman or Yay package managers only.*\
 *Entirely inspired by command found at https://wiki.archlinux.org/index.php/Fzf* \
