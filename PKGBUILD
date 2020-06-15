@@ -18,15 +18,4 @@ package() {
 	install -dm755 $pkgdir/usr/bin
 	cp -r $srcdir/$pkgname/fpf $pkgdir/usr/bin/
 	chmod a+x $pkgdir/usr/bin/*
-	install -dm755 "$pkgdir"/usr/lib/systemd/system/
-	install -m644 $srcdir/$pkgname/fpf.{service,timer} "$pkgdir"/usr/lib/systemd/system/
-
-	echo
-	echo
-	echo -------------------------------------
-	echo   'Please start/enable fpf service'
-	echo  'See git installation instructions'
-	echo -------------------------------------
-	echo
-	echo
 }

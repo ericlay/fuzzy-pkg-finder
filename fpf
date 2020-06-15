@@ -1,8 +1,9 @@
 #!/usr/bin/bash
 
+### Set up package lists
+pacman -Slq > /tmp/packages &
 
 ### Help 
-
 Help() {
    echo
    echo "Use fzf to search and install with Pacman and Yay"
@@ -20,11 +21,14 @@ Help() {
 }
 
 ### MAIN 
-
 while getopts ":yh" option; do
    case $option in
 
-      y) yay -Sl | awk '{print $2($4=="" ? "" : " *")}'| fzf -e -m --preview  'cat <(yay -Si {1}) <(yay -Fl {1} | awk "{print \$2}")' --layout=reverse | xargs -ro -n1 yay -S 
+      y) 
+        wget -P /tmp/aur/ https://aur.archlinux.org/packages.gz >/dev/null 2>&1 && gunzip -f /tmp/aur/packages.gz && cat /tmp/aur/packages >> /tmp/packages
+        yay -Qq > /tmp/local_packages 
+        cat /tmp/packages /tmp/local_packages | sort | uniq > /tmp/all_packages
+        cat /tmp/packages | awk '{print $2($4=="" ? "" : " *")}'| fzf -e -m --preview  'cat <(yay -Si {1}) <(yay -Fl {1} | awk "{print \$2}")' --layout=reverse | xargs -ro -n1 yay -S
          exit;;
 
       h) Help
@@ -36,4 +40,6 @@ while getopts ":yh" option; do
    esac
 done
 
-pacman -Sl | awk '{print $2($4=="" ? "" : " *")}'| fzf -e -m --preview 'cat <(pacman -Si {1}) <(pacman -Fl {1} | awk "{print \$2}")' --layout=reverse | xargs -ro -n1 sudo pacman -S
+pacman -Qq > /tmp/local_packages
+cat /tmp/packages /tmp/local_packages | sort | uniq > /tmp/all_packages
+cat /tmp/all_packages | awk '{print $2($4=="" ? "" : " *")}'| fzf -e -m --preview 'cat <(pacman -Si {1}) <(pacman -Fl {1} | awk "{print \$2}")' --layout=reverse | xargs -ro -n1 sudo pacman -S
