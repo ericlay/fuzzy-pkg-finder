@@ -1,45 +1,47 @@
 #!/usr/bin/bash
 
 ### Set up package lists
-pacman -Slq > /tmp/packages &
+pacman -Slq >/dev/null 2>&1 /tmp/packages
 
 ### Help 
 Help() {
-   echo
-   echo "Use fzf to search and install with Pacman and Yay"
-   echo "Defaults to Pacman if no options passed"
-   echo
-   echo "Syntax: fpf -[y|h]"
-   echo
-   echo "options:"
-   echo
-   echo "y     Search and install with Yay"
-   echo
-   echo "h     Print this help screen."
-   echo
-   echo
+    echo
+    echo "Use fzf to search and install with Pacman and Yay"
+    echo "Defaults to Pacman if no options passed"
+    echo
+    echo "Syntax: fpf -[y|h]"
+    echo
+    echo "options:"
+    echo
+    echo "y     Search and install with Yay"
+    echo
+    echo "h     Print this help screen."
+    echo
+    echo
 }
 
 ### MAIN 
 while getopts ":yh" option; do
-   case $option in
-
-      y) 
-        wget -P /tmp/aur/ https://aur.archlinux.org/packages.gz >/dev/null 2>&1 && gunzip -f /tmp/aur/packages.gz && cat /tmp/aur/packages >> /tmp/packages
-        yay -Qq > /tmp/local_packages 
-        cat /tmp/packages /tmp/local_packages | sort | uniq > /tmp/all_packages
-        cat /tmp/packages | awk '{print $2($4=="" ? "" : " *")}'| fzf -e -m --preview  'cat <(yay -Si {1}) <(yay -Fl {1} | awk "{print \$2}")' --layout=reverse | xargs -ro -n1 yay -S
-         exit;;
-
-      h) Help
-         exit;;
-
-     \?) echo "Error: Invalid option"
-         exit;;
-
-   esac
+	case $option in
+      y) #Get AUR package database, remove unwanted lines, preview database and hand off to yay for install
+	    clear
+        echo -e "Syncing AUR package database..." 
+        wget -P /tmp/aur/ https://aur.archlinux.org/packages.gz >/dev/null 2>&1 && gunzip -f /tmp/aur/packages.gz
+        echo "$(tail -n +2 /tmp/aur/packages)" > /tmp/aur/packages
+        cat /tmp/aur/packages | fzf -e -m --preview  'cat <(yay -Si {1}) <(yay -Fl {1} | awk "{print \$2}")' --layout=reverse --prompt='Select packages to install (use TAB to toggle selection) >' | xargs -ro -n1 yay -S
+        clear
+        return;;
+      h) #Usage // Help
+        Help
+        ;;
+      *) #Error catching
+        echo "Invalid Usage"
+        sleep 2
+        Help
+        ;;
+	esac
 done
 
 pacman -Qq > /tmp/local_packages
 cat /tmp/packages /tmp/local_packages | sort | uniq > /tmp/all_packages
-cat /tmp/all_packages | awk '{print $2($4=="" ? "" : " *")}'| fzf -e -m --preview 'cat <(pacman -Si {1}) <(pacman -Fl {1} | awk "{print \$2}")' --layout=reverse | xargs -ro -n1 sudo pacman -S
+cat /tmp/all_packages |fzf -e -m --preview 'cat <(pacman -Si {1}) <(pacman -Fl {1} | awk "{print \$2}")' --layout=reverse --prompt='Select packages to install (use TAB to toggle selection) >' | xargs -ro -n1 sudo pacman -S
