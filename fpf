@@ -20,7 +20,15 @@ Help() {
     echo
 }
 
-### MAIN 
+### MAIN
+
+#   Test for AUR option, if not run with pacman
+if [[ -z "$1" ]]; then
+    pacman -Qq > /tmp/local_packages
+    cat /tmp/packages /tmp/local_packages | sort | uniq > /tmp/all_packages
+    cat /tmp/all_packages |fzf -e -m --preview 'cat <(pacman -Si {1}) <(pacman -Fl {1} | awk "{print \$2}")' --layout=reverse --prompt='Select packages to install (use TAB to toggle selection) >' | xargs -ro -n1 sudo pacman -S
+fi
+
 while getopts ":yh" option; do
 	case $option in
       y) #Get AUR package database, remove unwanted lines, preview database and hand off to yay for install
@@ -30,7 +38,7 @@ while getopts ":yh" option; do
         echo "$(tail -n +2 /tmp/aur/packages)" > /tmp/aur/packages
         cat /tmp/aur/packages | fzf -e -m --preview  'cat <(yay -Si {1}) <(yay -Fl {1} | awk "{print \$2}")' --layout=reverse --prompt='Select packages to install (use TAB to toggle selection) >' | xargs -ro -n1 yay -S
         clear
-        return;;
+        ;;
       h) #Usage // Help
         Help
         ;;
@@ -41,7 +49,3 @@ while getopts ":yh" option; do
         ;;
 	esac
 done
-
-pacman -Qq > /tmp/local_packages
-cat /tmp/packages /tmp/local_packages | sort | uniq > /tmp/all_packages
-cat /tmp/all_packages |fzf -e -m --preview 'cat <(pacman -Si {1}) <(pacman -Fl {1} | awk "{print \$2}")' --layout=reverse --prompt='Select packages to install (use TAB to toggle selection) >' | xargs -ro -n1 sudo pacman -S
