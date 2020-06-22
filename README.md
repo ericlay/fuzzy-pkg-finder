@@ -6,7 +6,7 @@ Leverages the power of fzf to search package names and presents complete package
 On selection will hand off to Pacman or Yay to complete transaction. \
   \
 *For use with Pacman or Yay package managers only.*\
-*Entirely inspired by command found at https://wiki.archlinux.org/index.php/Fzf* \
+*Entirely inspired by command found at https://wiki.archlinux.org/index.php/Fzf#Arch_specific_fzf_uses* \
  \
 Installation: 
 ```
