@@ -1,8 +1,5 @@
 #!/usr/bin/bash
 
-### Set up package lists
-pacman -Slq | sort > /tmp/packages
-
 ### Help 
 Help() {
     echo
@@ -17,7 +14,6 @@ Help() {
     echo
     echo "h     Print this help screen."
     echo
-    echo
 }
 
 ### MAIN
@@ -25,38 +21,29 @@ Help() {
 #   Test for AUR option, if not run with pacman
 if [[ -z "$1" ]]; then
 	echo "Setting things up..."
-#    echo -e "$(pacman -Qqe)\n" > /tmp/local_packages
-#    counter=1
-#    while IFS= read -r line; do
-#    	sed -i -e '/$line/ s/.*/"$line" */g' /tmp/packages
-#    	counter=$((counter+1))
-#    done < /tmp/local_packages
-	mapfile -t local_pkgs < <(pacman -Qqe)
-	for line in "${local_pkgs[@]}"; do
-		sed -i "s/${line}/${line} */" /tmp/packages
-	done
-	unset local_pkgs
-    cat /tmp/packages |fzf -e -m --preview 'cat <(pacman -Si {1}) <(pacman -Fl {1} | awk "{print \$2}")' --layout=reverse --prompt='Select packages to install (use TAB to toggle selection) >' | xargs -ro -n1 sudo pacman -S
+	sort <(comm -23 <(pacman -Slq | sort) <(pacman -Qq | sort)) <(comm -12 <(pacman -Slq | sort) <(pacman -Qq | sort) | awk '{print $0" *"}') > /tmp/packages
+    cat /tmp/packages |fzf -e -m --preview 'cat <(pacman -Si {1}) <(pacman -Fl {1} | awk "{print \$2}")' --layout=reverse --prompt='Select packages to install (use TAB to toggle selection) > ' | xargs -ro sudo pacman -S
     clear
 fi
 
 while getopts ":yh" option; do
 	case $option in
-      y) #Get AUR package database, remove unwanted lines, preview database and hand off to yay for install
-	    clear
-        echo -e "Syncing AUR package database..." 
-        wget -P /tmp/aur/ https://aur.archlinux.org/packages.gz >/dev/null 2>&1 && gunzip -f /tmp/aur/packages.gz
-        echo "$(tail -n +2 /tmp/aur/packages)" > /tmp/aur/packages
-        cat /tmp/aur/packages | fzf -e -m --preview  'cat <(yay -Si {1}) <(yay -Fl {1} | awk "{print \$2}")' --layout=reverse --prompt='Select packages to install (use TAB to toggle selection) >' | xargs -ro -n1 yay -S
-        clear
-        ;;
-      h) #Usage // Help
-        Help
-        ;;
-      *) #Error catching
-        echo "Invalid Usage"
-        sleep 2
-        Help
-        ;;
+        y) #Get AUR package database, remove unwanted lines, preview database and hand off to yay for install
+	        clear
+            echo -e "Syncing AUR package database..." 
+            wget -P /tmp/aur/ https://aur.archlinux.org/packages.gz >/dev/null 2>&1 && gunzip -f /tmp/aur/packages.gz
+            echo "$(tail -n +2 /tmp/aur/packages)" > /tmp/aur/packages
+		    sort <(comm -23 <(sort /tmp/aur/packages) <(pacman -Qqm | sort)) <(comm -12 <(sort /tmp/aur/packages) <(pacman -Qq | sort) | awk '{print $0" *"}') > /tmp/aur/packages
+            cat /tmp/aur/packages | fzf -e -m --preview  'cat <(yay -Si {1}) <(yay -Fl {1} | awk "{print \$2}")' --layout=reverse --prompt='Select packages to install (use TAB to toggle selection) > ' | xargs -ro yay -S
+            clear
+            ;;
+        h) #Usage // Help
+            Help
+            ;;
+        *) #Error catching
+            echo "Invalid Usage"
+            sleep 2
+            Help
+            ;;
 	esac
 done
