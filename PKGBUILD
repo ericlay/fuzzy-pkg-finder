@@ -1,6 +1,6 @@
 # Maintainer: Eric Lay <ericlaytm@gmail.com>
 pkgname=fuzzy-pkg-finder
-pkgver=0.6
+pkgver=0.7
 pkgrel=1
 pkgdesc="Simple cli command for using fzf to search and install packages"
 arch=(any)
