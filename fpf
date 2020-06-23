@@ -17,16 +17,16 @@ Help() {
 }
 
 ### Manjaro Repo
-
-Mrepos() {
+#Get Manjaro package list, sort, mark installed, preview infos and finally hand off to pacman for install
+Mrepo() {
 	echo "Setting things up..."
 	sort <(comm -23 <(pacman -Slq | sort) <(pacman -Qq | sort)) <(comm -12 <(pacman -Slq | sort) <(pacman -Qq | sort) | awk '{print $0" *"}') > /tmp/packages
-    cat /tmp/packages |fzf -e -m --preview 'cat <(pacman -Si {1}) <(pacman -Fl {1} | awk "{print \$2}")' --layout=reverse --prompt='Select packages to install (use TAB to toggle selection) > ' | xargs -ro sudo pacman -S
+	cat /tmp/packages |fzf -e -m --preview 'cat <(pacman -Si {1}) <(pacman -Fl {1} | awk "{print \$2}")' --layout=reverse --prompt='Select packages to install (use TAB to toggle selection) > ' | xargs -ro sudo pacman -S
 }
 
 ### AUR Repo
-
-Arepos() {
+#Get AUR package database, remove unwanted lines, sort, mark installed, preview infos and finally hand off to yay for install
+Arepo() {
 	wget -P /tmp/aur/ https://aur.archlinux.org/packages.gz >/dev/null 2>&1 && gunzip -f /tmp/aur/packages.gz
 	echo "$(tail -n +2 /tmp/aur/packages)" > /tmp/aur/packages
 	sort <(comm -23 <(sort /tmp/aur/packages) <(pacman -Qq | sort)) <(comm -12 <(sort /tmp/aur/packages) <(pacman -Qq | sort) | awk '{print $0" *"}') > /tmp/aur_packages
@@ -37,14 +37,14 @@ Arepos() {
 
 #   Test for AUR option, if not run with pacman
 if [[ -z "$1" ]]; then
-	Mrepos
+	Mrepo
 else
 	for opt in "$@"; do
 		case $opt in
-    		-y|--yay) #Get AUR package database, remove unwanted lines, preview database and hand off to yay for install
-       			echo -e "Syncing AUR package database..." 
-				Arepos
-       			;;
+    		-y|--yay) 
+				echo -e "Syncing AUR package database..." 
+				Arepo
+				;;
     		-h|--help) #Usage // Help
        			Help
        			;;
