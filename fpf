@@ -16,33 +16,42 @@ Help() {
     echo
 }
 
+### Manjaro Repo
+
+Mrepos() {
+	echo "Setting things up..."
+	sort <(comm -23 <(pacman -Slq | sort) <(pacman -Qq | sort)) <(comm -12 <(pacman -Slq | sort) <(pacman -Qq | sort) | awk '{print $0" *"}') > /tmp/packages
+    cat /tmp/packages |fzf -e -m --preview 'cat <(pacman -Si {1}) <(pacman -Fl {1} | awk "{print \$2}")' --layout=reverse --prompt='Select packages to install (use TAB to toggle selection) > ' | xargs -ro sudo pacman -S
+}
+
+### AUR Repo
+
+Arepos() {
+	wget -P /tmp/aur/ https://aur.archlinux.org/packages.gz >/dev/null 2>&1 && gunzip -f /tmp/aur/packages.gz
+	echo "$(tail -n +2 /tmp/aur/packages)" > /tmp/aur/packages
+	sort <(comm -23 <(sort /tmp/aur/packages) <(pacman -Qq | sort)) <(comm -12 <(sort /tmp/aur/packages) <(pacman -Qq | sort) | awk '{print $0" *"}') > /tmp/aur_packages
+	cat /tmp/aur/packages | fzf -e -m --preview  'cat <(yay -Si {1}) <(yay -Fl {1} | awk "{print \$2}")' --layout=reverse --prompt='Select packages to install (use TAB to toggle selection) > ' | xargs -ro yay -S
+}
+
 ### MAIN
 
 #   Test for AUR option, if not run with pacman
 if [[ -z "$1" ]]; then
-	echo "Setting things up..."
-	sort <(comm -23 <(pacman -Slq | sort) <(pacman -Qq | sort)) <(comm -12 <(pacman -Slq | sort) <(pacman -Qq | sort) | awk '{print $0" *"}') > /tmp/packages
-    cat /tmp/packages |fzf -e -m --preview 'cat <(pacman -Si {1}) <(pacman -Fl {1} | awk "{print \$2}")' --layout=reverse --prompt='Select packages to install (use TAB to toggle selection) > ' | xargs -ro sudo pacman -S
+	Mrepos
+else
+	for opt in "$@"; do
+		case $opt in
+    		-y|--yay) #Get AUR package database, remove unwanted lines, preview database and hand off to yay for install
+       			echo -e "Syncing AUR package database..." 
+				Arepos
+       			;;
+    		-h|--help) #Usage // Help
+       			Help
+       			;;
+    		-*) #Error catching
+       			echo "Invalid Usage"
+       			Help
+       			;;
+    	esac
+	done
 fi
-
-while getopts ":yh" option; do
-    case $option in
-    y) #Get AUR package database, remove unwanted lines, preview database and hand off to yay for install
-       clear
-       echo -e "Syncing AUR package database..." 
-       wget -P /tmp/aur/ https://aur.archlinux.org/packages.gz >/dev/null 2>&1 && gunzip -f /tmp/aur/packages.gz
-       echo "$(tail -n +2 /tmp/aur/packages)" > /tmp/aur/packages
-       sort <(comm -23 <(sort /tmp/aur/packages) <(pacman -Qq | sort)) <(comm -12 <(sort /tmp/aur/packages) <(pacman -Qq | sort) | awk '{print $0" *"}') > /tmp/aur_packages
-       cat /tmp/aur_packages | fzf -e -m --preview  'cat <(yay -Si {1}) <(yay -Fl {1} | awk "{print \$2}")' --layout=reverse --prompt='Select packages to install (use TAB to toggle selection) > ' | xargs -ro yay -S
-       clear
-       ;;
-    h) #Usage // Help
-       Help
-       ;;
-    *) #Error catching
-       echo "Invalid Usage"
-       sleep 2
-       Help
-       ;;
-    esac
-done
