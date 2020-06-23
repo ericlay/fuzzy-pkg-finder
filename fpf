@@ -30,7 +30,7 @@ Arepos() {
 	wget -P /tmp/aur/ https://aur.archlinux.org/packages.gz >/dev/null 2>&1 && gunzip -f /tmp/aur/packages.gz
 	echo "$(tail -n +2 /tmp/aur/packages)" > /tmp/aur/packages
 	sort <(comm -23 <(sort /tmp/aur/packages) <(pacman -Qq | sort)) <(comm -12 <(sort /tmp/aur/packages) <(pacman -Qq | sort) | awk '{print $0" *"}') > /tmp/aur_packages
-	cat /tmp/aur/packages | fzf -e -m --preview  'cat <(yay -Si {1}) <(yay -Fl {1} | awk "{print \$2}")' --layout=reverse --prompt='Select packages to install (use TAB to toggle selection) > ' | xargs -ro yay -S
+	cat /tmp/aur_packages | fzf -e -m --preview  'cat <(yay -Si {1}) <(yay -Fl {1} | awk "{print \$2}")' --layout=reverse --prompt='Select packages to install (use TAB to toggle selection) > ' | xargs -ro yay -S
 }
 
 ### MAIN
