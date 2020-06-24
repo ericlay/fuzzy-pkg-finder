@@ -20,8 +20,18 @@ Help() {
 #Get Manjaro package list, sort, mark installed, preview infos and finally hand off to pacman for install
 Mrepo() {
 	echo "Setting things up..."
-	sort <(comm -23 <(pacman -Slq | sort) <(pacman -Qq | sort)) <(comm -12 <(pacman -Slq | sort) <(pacman -Qq | sort) | awk '{print $0" *"}') > /tmp/packages
-	cat /tmp/packages |fzf -e -m --preview 'cat <(pacman -Si {1}) <(pacman -Fl {1} | awk "{print \$2}")' --preview-window=wrap --layout=reverse --marker='>>' --header="Select packages to install (use TAB to toggle selection)" --info=hidden | xargs -ro sudo pacman -S
+	sort <(comm -23 <(pacman -Slq | sort) <(pacman -Qq | sort)) <(comm -12 <(pacman -Slq | sort) <(pacman -Qq | sort) | awk '{print $0" \033[32m*\033[0m"}') > /tmp/packages
+	cat /tmp/packages |fzf -q "$1" -e -m --preview 'cat <(pacman -Si {1}) <(pacman -Fl {1} | awk "{print \$2}")' --preview-window=wrap --layout=reverse --marker='>>' --header="Select packages to install (use TAB to toggle selection)" --info=hidden --ansi | xargs -ro sudo pacman -S
+}
+
+# List installed pkgs
+Installed() {
+	sort <(pacman -Qqs) |fzf -q "$1" -e -m --preview 'cat <(pacman -Qi {1}) <(pacman -Fl {1} | awk "{print \$2}")' --preview-window=wrap --layout=reverse --marker='>>' --header="Select packages to install (use TAB to toggle selection)" --info=hidden --ansi | xargs -ro pacman -Qik
+}
+
+# Remove installed pkgs
+Remove() {
+	sort <(pacman -Qqs) |fzf -q "$1" -e -m --preview 'cat <(pacman -Si {1}) <(pacman -Fl {1} | awk "{print \$2}")' --preview-window=wrap --layout=reverse --marker='>>' --header="Select packages to install (use TAB to toggle selection)" --info=hidden --ansi | xargs -ro sudo pacman -Rsn
 }
 
 ### AUR Repo
@@ -29,25 +39,55 @@ Mrepo() {
 Arepo() {
 	wget -P /tmp/aur/ https://aur.archlinux.org/packages.gz >/dev/null 2>&1 && gunzip -f /tmp/aur/packages.gz
 	echo "$(tail -n +2 /tmp/aur/packages)" > /tmp/aur/packages
-	sort <(comm -23 <(sort /tmp/aur/packages) <(pacman -Qq | sort)) <(comm -12 <(sort /tmp/aur/packages) <(pacman -Qq | sort) | awk '{print $0" *"}') > /tmp/aur_packages
-	cat /tmp/aur_packages | fzf -e -m --preview  'cat <(yay -Si {1}) <(yay -Fl {1} | awk "{print \$2}")' --preview-window=wrap --layout=reverse --marker='>>' --header="Select packages to install (use TAB to toggle selection)" --info=hidden | xargs -ro yay -S
+	sort <(comm -23 <(sort /tmp/aur/packages) <(pacman -Qq | sort)) <(comm -12 <(sort /tmp/aur/packages) <(pacman -Qq | sort) | awk '{print $0" \033[32m*\033[0m"}') > /tmp/aur_packages
+	cat /tmp/aur_packages | fzf -q "$1" -e -m --preview  'cat <(yay -Si {1}) <(pacman -Ql {1} 2>/dev/null | awk "{print \$2}")' --preview-window=wrap --layout=reverse --marker='>>' --header="Select packages to install (use TAB to toggle selection)" --info=hidden --ansi | xargs -ro yay -S
 }
+
+# List installed pkgs from AUR
+AurInstalled() {
+	sort <(pacman -Qqm) |fzf -q "$1" -e -m --preview 'cat <(yay -Qi {1}) <(pacman -Ql {1} | awk "{print \$2}")' --preview-window=wrap --layout=reverse --marker='>>' --header="Select packages to install (use TAB to toggle selection)" --info=hidden --ansi | xargs -ro pacman -Qik
+}
+
+# Remove installed pkgs from AUR
+Remove() {
+	sort <(pacman -Qqm) |fzf -q "$1" -e -m --preview 'cat <(yay -Qi {1}) <(pacman -Ql {1} | awk "{print \$2}")' --preview-window=wrap --layout=reverse --marker='>>' --header="Select packages to install (use TAB to toggle selection)" --info=hidden --ansi | xargs -ro sudo pacman -Rsn
+}
+
+### ORPHANS
+#Orphans() {
+	
+#}
 
 ### MAIN
 
 #   Test for AUR option, if not run with pacman
-if [[ -z "$1" ]]; then
-	Mrepo
+if [[ ! "$1" =~ "-" ]]; then
+	Mrepo "$1"
 else
 	for opt in "$@"; do
 		case $opt in
-    		-y|--yay) 
+    		-a|--aur)
 				echo -e "Syncing AUR package database..." 
-				Arepo
+				Arepo "$2"
 				;;
+       		-l|--list-installed)
+       			Installed "$2"
+       			;;
+       		-la|--list-aur-installed)
+       			AurInstalled "$2"
+       			;;
+       		-o|--orphans)
+       			Orphans "$2"
+       			;;
+       		-R|--remove)
+       			Remove "$2"
+       			;;
+       		-Ra|--remove-aur)
+       			AurRemove "$2"
+       			;;
     		-h|--help) #Usage // Help
        			Help
-       			;;
+       			;;       			
     		-*) #Error catching
        			echo "Invalid Usage"
        			Help
