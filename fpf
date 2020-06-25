@@ -6,11 +6,19 @@ Help() {
     echo "Use fzf to search and install with Pacman and Yay"
     echo "Defaults to Pacman if no options passed"
     echo
-    echo "Syntax: fpf -[y|h]"
+    echo "Syntax: fpf -[a|l|la|R|Ra|h]"
     echo
     echo "options:"
     echo
-    echo "y     Search and install with Yay"
+    echo "a     Search/List and install from AUR with Yay"
+    echo
+    echo "l		Search/List installed packages from official repo"
+    echo
+    echo "la	Search/List installed packages from AUR repo"
+    echo
+    echo "R		Search/List installed packages from official repos for removal"
+    echo
+    echo "Ra	Search/List installed packages from AUR repo for removal"
     echo
     echo "h     Print this help screen."
     echo

@@ -6,7 +6,6 @@ Leverages the power of fzf to search package names and presents complete package
 On selection will hand off to Pacman or Yay to complete transaction. \
   \
 *For use with Pacman or Yay package managers only.*\
-*Entirely inspired by command found at https://wiki.archlinux.org/index.php/Fzf#Arch_specific_fzf_uses* \
  \
 Installation: 
 ```
@@ -17,10 +16,14 @@ makepkg -sric
  \
 Usage: 
 ```
-Syntax: fpf -[y|h]
+Syntax: fpf -[a|l|la|R|Ra|h]
 Defaults to Pacman if no options passed
 
 options:
--y	Search and install with Yay
--h	Print this help screen
+a     Search/List and install from AUR with Yay
+l		Search/List installed packages from official repo
+la	Search/List installed packages from AUR repo
+R		Search/List installed packages from official repos for removal
+Ra	Search/List installed packages from AUR repo for removal
+h     Print this help screen.
 ```
