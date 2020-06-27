@@ -25,11 +25,28 @@ Help() {
 }
 
 ### Manjaro Repo
+
+#Get pkg infos and files lists, bypassing 'sudo pacman -Fy' because entering a password to view pkg info is silly
+
+GetDB() {
+	wget -P /tmp/core/ https://mirror.datacenter.by/pub/mirrors/manjaro/stable/core/"$type"/core.files.tar.gz >/dev/null 2>&1 && tar xzf /tmp/core/core.files.tar.gz -C /tmp/core 2> /dev/null
+}
+
+#Double check things are up to date
+UpdateInfos() {
+	[ -f /tmp/core/core.files.tar.gz ] || GetDB
+	d1=$(stat -c %y /tmp/core/core.files.tar.gz)
+	d2=$(stat -c %y /var/lib/pacman/sync/core.db)
+	d1="${d1:0:10}"
+	d2="${d2:0:10}"
+	[[ "${d2///-/}" > "${d1//-/}" ]] && GetDB
+}
+
 #Get Manjaro package list, sort, mark installed, preview infos and finally hand off to pacman for install
 Mrepo() {
 	echo "Setting things up..."
-	sort <(comm -23 <(pacman -Slq | sort) <(pacman -Qq | sort)) <(comm -12 <(pacman -Slq | sort) <(pacman -Qq | sort) | awk '{print $0" \033[32m*\033[0m"}') > /tmp/packages
-	cat /tmp/packages |fzf -q "$1" -e -m --preview 'cat <(pacman -Si {1}) <(pacman -Fl {1} | awk "{print \$2}")' --preview-window=wrap --layout=reverse --marker='>>' --header="Select packages to install (use TAB to toggle selection)" --info=hidden --ansi | xargs -ro sudo pacman -S
+	sort <(comm -23 <(pacman -Sl | sort) <(pacman -Q | sort)) <(comm -12 <(pacman -Sl | sort) <(pacman -Q | sort) | awk '{$1=""; print $0" \033[32m*\033[0m"}') >  /tmp/packages
+	cat /tmp/packages |fzf -q "$1" -e -m --preview 'cat <(cat /tmp/core/{1}/desc) <(cat /tmp/core/{1}/files)' --preview-window=wrap --layout=reverse --marker='>>' --header="Select packages to install (use TAB to toggle selection)" --info=hidden --ansi | xargs -ro sudo pacman -S
 }
 
 # List installed pkgs
@@ -70,6 +87,7 @@ Remove() {
 
 #   Test for AUR option, if not run with pacman
 if [[ ! "$1" =~ "-" ]]; then
+	UpdateInfos
 	Mrepo "$1"
 else
 	for opt in "$@"; do
