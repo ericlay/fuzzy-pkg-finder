@@ -34,7 +34,7 @@ UpdateInfos() {
 }
 
 #	Get Official package list, sort, mark installed, preview infos and finally hand off to pacman for install
-Orepo() {
+Official() {
 	echo "Setting things up..."
 	sort <(comm -23 <(pacman -Slq | sort) <(pacman -Qq | sort)) <(comm -12 <(pacman -Slq | sort) <(pacman -Qq | sort) | awk '{print $0" \033[32m*\033[0m"}') >  /tmp/packages
 	echo "$(echo -e ' Select packages to install\n (use TAB to toggle selection)'; cat /tmp/packages)" > /tmp/packages
@@ -55,9 +55,9 @@ Remove() {
 	cat /tmp/installed_packages |fzf -q "$1" -e -m --preview 'cat <(pacman -Si {1} 2>/dev/null || yay -Qi {1}) <(pacman -Ql {1} | awk "{print \$2}")' --preview-window=65%:wrap --layout=reverse --marker='>>' --header-lines=2 --info=hidden --ansi --margin="2%,1%,2%,1%" --cycle | xargs -ro sudo pacman -Rsn
 }
 
-### AUR Repo
+### AUR
 #	Get AUR package database, remove unwanted lines, sort, mark installed, preview infos and finally hand off to yay for install
-Arepo() {
+Aur() {
 	[ -f /tmp/aur/packages ] || { wget -P /tmp/aur/ https://aur.archlinux.org/packages.gz >/dev/null 2>&1 && gunzip -f /tmp/aur/packages.gz; echo "$(tail -n +2 /tmp/aur/packages)" > /tmp/aur/packages; }
 	sort <(comm -23 <(sort /tmp/aur/packages) <(pacman -Qq | sort)) <(comm -12 <(sort /tmp/aur/packages) <(pacman -Qq | sort) | awk '{print $0" \033[32m*\033[0m"}') > /tmp/aur_packages
 	echo "$(echo -e ' Select packages to install\n (use TAB to toggle selection)'; cat /tmp/aur_packages)" > /tmp/aur_packages
@@ -71,13 +71,6 @@ AurInstalled() {
 	cat /tmp/aur_installed_packages |fzf -q "$1" -e -m --preview 'cat <(yay -Qi {1}) <(echo "") <(pacman -Ql {1} | awk "{print \$2}")' --preview-window=65%:wrap --layout=reverse --marker='>>' --header-lines=2 --info=hidden --ansi --margin="2%,1%,2%,1%" --cycle | xargs -ro pacman -Qik
 }
 
-#	Remove installed pkgs from AUR
-AurRemove() {
-	sort <(pacman -Qqs) > /tmp/aur_installed_packages
-	echo "$(echo -e ' Select packages to print remove\n (use TAB to toggle selection)'; cat /tmp/installed_packages)" > /tmp/aur_installed_packages
-	cat /tmp/aur_installed_packages |fzf -q "$1" -e -m --preview 'cat <(yay -Qi {1}) <(pacman -Ql {1} | awk "{print \$2}")' --preview-window=65%:wrap --layout=reverse --marker='>>' --header-lines=2 --info=hidden --ansi --margin="2%,1%,2%,1%" --cycle | xargs -ro sudo pacman -Rsn
-}
-
 ### ORPHANS
 #Orphans() {
 	
@@ -89,13 +82,13 @@ AurRemove() {
 UpdateInfos
 #   Test for AUR option, if not run with pacman
 if [[ ! "$1" =~ "-" ]]; then
-	Orepo "$1"
+	Official "$1"
 else
 	for opt in "$@"; do
 		case $opt in
     		-a|--aur)
 				echo -e "Syncing AUR package database..." 
-				Arepo "$2"
+				Aur "$2"
 				;;
        		-l|--list-installed)
        			Installed "$2"
