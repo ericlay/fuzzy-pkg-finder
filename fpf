@@ -6,7 +6,7 @@ Help() {
     echo "Use fzf to search and install with Pacman and Yay"
     echo "Defaults to Pacman if no options passed"
     echo
-    echo "Syntax: fpf -[a|l|la|R|h]"
+    echo "Syntax: fpf -[a|l|la|R|o|h]"
     echo
     echo "options:"
     echo
@@ -17,6 +17,8 @@ Help() {
     echo "la    Search/List installed packages only from AUR repo"
     echo
     echo "R     Search/List installed packages for removal"
+    echo
+    echo "o     Search/List orphaned packages for removal"
     echo
     echo "h     Print this help screen."
     echo
@@ -72,9 +74,11 @@ AurInstalled() {
 }
 
 ### ORPHANS
-#Orphans() {
-	
-#}
+Orphans() {
+	sort <(pacman -Qtdq) > /tmp/orphaned
+	echo "$(echo -e ' Select packages to remove\n (use TAB to toggle selection)'; cat /tmp/orphaned)" > /tmp/orphaned
+	cat /tmp/orphaned |fzf -q "$1" -e -m --preview 'cat <(pacman -Si {1} 2>/dev/null || yay -Qi {1}) <(pacman -Ql {1} | awk "{print \$2}")' --preview-window=65%:wrap --layout=reverse --marker='>>' --header-lines=2 --info=hidden --ansi --margin="2%,1%,2%,1%" --cycle | xargs -ro sudo pacman -Rsn	
+}
 
 ### MAIN
 
@@ -102,10 +106,10 @@ else
        		-R|--remove)
        			Remove "$2"
        			;;
-    		-h|--help) #Usage // Help
+    		-h|--help)
        			Help
        			;;       			
-    		-*) #Error catching
+    		-*) 
        			echo "Invalid Usage"
        			Help
        			;;

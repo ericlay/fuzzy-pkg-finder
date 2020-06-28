@@ -16,7 +16,7 @@ makepkg -sric
  \
 Usage: 
 ```
-Syntax: fpf -[a|l|la|R|Ra|h]
+Syntax: fpf -[a|l|la|R|o|h]
 Defaults to Pacman if no options passed
 
 options:
@@ -24,5 +24,6 @@ a     Search/List and install from AUR with Yay
 l     Search/List installed packages from official repo
 la    Search/List installed packages from AUR 
 R     Search/List installed packages from official repos for removal
+o     Search/List orphaned packages for removal
 h     Print this help screen.
 ```
