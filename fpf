@@ -6,7 +6,7 @@ Help() {
     echo "Use fzf to search and install with Pacman and Yay"
     echo "Defaults to Pacman if no options passed"
     echo
-    echo "Syntax: fpf -[a|l|la|R|Ra|h]"
+    echo "Syntax: fpf -[a|l|la|R|h]"
     echo
     echo "options:"
     echo
@@ -16,16 +16,14 @@ Help() {
     echo
     echo "la    Search/List installed packages from AUR repo"
     echo
-    echo "R     Search/List installed packages from official repos for removal"
-    echo
-    echo "Ra    Search/List installed packages from AUR repo for removal"
+    echo "R     Search/List installed packages for removal"
     echo
     echo "h     Print this help screen."
     echo
 }
 
 ### Manjaro Repo
-#Double check things are up to date
+#	Check things are up to date
 UpdateInfos() {
 	[ -f /var/lib/pacman/sync/core.files ] || { echo -e "Syncing files database"; sudo pacman -Fy; }
 	d1=$(stat -c %y /var/lib/pacman/sync/core.files)
@@ -35,30 +33,30 @@ UpdateInfos() {
 	[[ "${d2///-/}" > "${d1//-/}" ]] && { echo -e "Files database is out of date\nSyncing now..."; sudo pacman -Fy; }
 }
 
-#Get Manjaro package list, sort, mark installed, preview infos and finally hand off to pacman for install
-Mrepo() {
+#	Get Official package list, sort, mark installed, preview infos and finally hand off to pacman for install
+Orepo() {
 	echo "Setting things up..."
 	sort <(comm -23 <(pacman -Slq | sort) <(pacman -Qq | sort)) <(comm -12 <(pacman -Slq | sort) <(pacman -Qq | sort) | awk '{print $0" \033[32m*\033[0m"}') >  /tmp/packages
 	echo "$(echo -e ' Select packages to install\n (use TAB to toggle selection)'; cat /tmp/packages)" > /tmp/packages
   	cat /tmp/packages |fzf -q "$1" -e -m --preview 'cat <(pacman -Si {1}) <(pacman -Fl {1} | awk "{print \$2}")' --preview-window=65%:wrap --layout=reverse --marker='>>' --header-lines=2 --info=hidden --ansi --margin="2%,1%,2%,1%" --cycle | xargs -ro sudo pacman -S
 }
 
-# List installed pkgs
+#	List installed pkgs
 Installed() {
 	sort <(pacman -Qqs) > /tmp/installed_packages
 	echo "$(echo -e ' Select packages to print info\n (use TAB to toggle selection)'; cat /tmp/installed_packages)" > /tmp/installed_packages
 	cat /tmp/installed_packages |fzf -q "$1" -e -m --preview 'cat <(pacman -Qik {1}) <(echo "") <(pacman -Fl {1} | awk "{print \$2}")' --preview-window=65%:wrap --layout=reverse --marker='>>' --header-lines=2 --info=hidden --ansi --margin="2%,1%,2%,1%" --cycle | xargs -ro pacman -Qik
 }
 
-# Remove installed pkgs
+#	Remove installed pkgs
 Remove() {
 	sort <(pacman -Qqs) > /tmp/installed_packages
 	echo "$(echo -e ' Select packages to remove\n (use TAB to toggle selection)'; cat /tmp/installed_packages)" > /tmp/installed_packages
-	cat /tmp/installed_packages |fzf -q "$1" -e -m --preview 'cat <(pacman -Si {1}) <(pacman -Fl {1} | awk "{print \$2}")' --preview-window=65%:wrap --layout=reverse --marker='>>' --header-lines=2 --info=hidden --ansi --margin="2%,1%,2%,1%" --cycle | xargs -ro sudo pacman -Rsn
+	cat /tmp/installed_packages |fzf -q "$1" -e -m --preview 'cat <(pacman -Si {1} 2>/dev/null || yay -Qi {1}) <(pacman -Ql {1} | awk "{print \$2}")' --preview-window=65%:wrap --layout=reverse --marker='>>' --header-lines=2 --info=hidden --ansi --margin="2%,1%,2%,1%" --cycle | xargs -ro sudo pacman -Rsn
 }
 
 ### AUR Repo
-#Get AUR package database, remove unwanted lines, sort, mark installed, preview infos and finally hand off to yay for install
+#	Get AUR package database, remove unwanted lines, sort, mark installed, preview infos and finally hand off to yay for install
 Arepo() {
 	[ -f /tmp/aur/packages ] || { wget -P /tmp/aur/ https://aur.archlinux.org/packages.gz >/dev/null 2>&1 && gunzip -f /tmp/aur/packages.gz; echo "$(tail -n +2 /tmp/aur/packages)" > /tmp/aur/packages; }
 	sort <(comm -23 <(sort /tmp/aur/packages) <(pacman -Qq | sort)) <(comm -12 <(sort /tmp/aur/packages) <(pacman -Qq | sort) | awk '{print $0" \033[32m*\033[0m"}') > /tmp/aur_packages
@@ -66,14 +64,14 @@ Arepo() {
 	cat /tmp/aur_packages | fzf -q "$1" -e -m --preview  'cat <(yay -Si {1}) <(pacman -Ql {1} 2>/dev/null | awk "{print \$2}")' --preview-window=65%:wrap --layout=reverse --marker='>>' --header-lines=2 --info=hidden --ansi --margin="2%,1%,2%,1%" --cycle | xargs -ro yay -S
 }
 
-# List installed pkgs from AUR
+#	List installed pkgs from AUR
 AurInstalled() {
 	sort <(pacman -Qqm) > /tmp/aur_installed_packages
 	echo "$(echo -e ' Select packages to print info\n (use TAB to toggle selection)'; cat /tmp/aur_installed_packages)" > /tmp/aur_installed_packages
 	cat /tmp/aur_installed_packages |fzf -q "$1" -e -m --preview 'cat <(yay -Qi {1}) <(echo "") <(pacman -Ql {1} | awk "{print \$2}")' --preview-window=65%:wrap --layout=reverse --marker='>>' --header-lines=2 --info=hidden --ansi --margin="2%,1%,2%,1%" --cycle | xargs -ro pacman -Qik
 }
 
-# Remove installed pkgs from AUR
+#	Remove installed pkgs from AUR
 AurRemove() {
 	sort <(pacman -Qqs) > /tmp/aur_installed_packages
 	echo "$(echo -e ' Select packages to print remove\n (use TAB to toggle selection)'; cat /tmp/installed_packages)" > /tmp/aur_installed_packages
@@ -87,11 +85,11 @@ AurRemove() {
 
 ### MAIN
 
-#	First we update the files database
+#	Update the files database
 UpdateInfos
 #   Test for AUR option, if not run with pacman
 if [[ ! "$1" =~ "-" ]]; then
-	Mrepo "$1"
+	Orepo "$1"
 else
 	for opt in "$@"; do
 		case $opt in
@@ -110,9 +108,6 @@ else
        			;;
        		-R|--remove)
        			Remove "$2"
-       			;;
-       		-Ra|--remove-aur)
-       			AurRemove "$2"
        			;;
     		-h|--help) #Usage // Help
        			Help
