@@ -1,11 +1,11 @@
 # Maintainer: Eric Lay <ericlaytm@gmail.com>
 pkgname=fuzzy-pkg-finder
-pkgver=0.8.5
+pkgver=0.9
 pkgrel=1
 pkgdesc="Simple cli command for using fzf to search and install packages"
-arch=('any')
+arch=('x86_64' 'aarch64')
 url="https://github.com/ericlay/$pkgname"
-license=('GPL')
+license=('GPL3')
 depends=('pacman'
     'yay'
     'fzf'

@@ -22,8 +22,7 @@ Defaults to Pacman if no options passed
 options:
 a     Search/List and install from AUR with Yay
 l     Search/List installed packages from official repo
-la    Search/List installed packages from AUR repo
+la    Search/List installed packages from AUR 
 R     Search/List installed packages from official repos for removal
-Ra    Search/List installed packages from AUR repo for removal
 h     Print this help screen.
 ```
