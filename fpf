@@ -28,10 +28,8 @@ Help() {
 #	Check things are up to date
 UpdateInfos() {
 	[ -f /var/lib/pacman/sync/core.files ] || { echo -e "Syncing files database"; sudo pacman -Fy; }
-	d1=$(stat -c %y /var/lib/pacman/sync/core.files)
-	d2=$(stat -c %y /var/lib/pacman/sync/core.db)
-	d1="${d1:0:10}"
-	d2="${d2:0:10}"
+	d1="${$(stat -c %y /var/lib/pacman/sync/core.files):0:10}"
+	d2="${$(stat -c %y /var/lib/pacman/sync/core.db):0:10}"
 	[[ "${d2///-/}" > "${d1//-/}" ]] && { echo -e "Files database is out of date\nSyncing now..."; sudo pacman -Fy; }
 }
 
