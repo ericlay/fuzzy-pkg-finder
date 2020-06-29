@@ -1,6 +1,6 @@
- # fuzzy-pkg-finder
+ # Fuzzy-pkg-finder
 
-**Simple cli command for using fzf to search and install packages.**\
+**Simple cli utility using fzf to search and install/list/remove packages.**\
  \
 ![Screenshot](https://gitlab.com/airclay/fuzzy-pkg-finder/-/raw/master/fpf.png) \
  \
