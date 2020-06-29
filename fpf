@@ -75,7 +75,6 @@ AurInstalled() {
 }
 
 ### ORPHANS
-#	List orphaned packages and remove selected
 Orphans() {
 	sort <(pacman -Qtdq) > /tmp/orphaned
 	echo "$(echo -e ' Select packages to remove\n (use TAB to toggle selection)'; cat /tmp/orphaned)" > /tmp/orphaned
