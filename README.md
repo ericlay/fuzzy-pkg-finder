@@ -2,6 +2,8 @@
 
 **Simple cli command for using fzf to search and install packages.**\
  \
+
+ \
 Leverages the power of fzf to search package names and presents complete package information in preview pane. \
 On selection will hand off to Pacman or Yay to complete transaction. \
   \
