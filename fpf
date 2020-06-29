@@ -59,6 +59,9 @@ Remove() {
 #	Get AUR package database, remove unwanted lines, sort, mark installed, preview infos and finally hand off to yay for install
 Aur() {
 	[ -f /tmp/aur/packages ] || { wget -P /tmp/aur/ https://aur.archlinux.org/packages.gz >/dev/null 2>&1 && gunzip -f /tmp/aur/packages.gz; echo "$(tail -n +2 /tmp/aur/packages)" > /tmp/aur/packages; }
+	d1="${$(stat -c %y /tmp/aur/packages):0:10}"
+	d2="$(date -I'date')"
+	[[ "${d2///-/}" > "${d1//-/}" ]] && { wget -P /tmp/aur/ https://aur.archlinux.org/packages.gz >/dev/null 2>&1 && gunzip -f /tmp/aur/packages.gz; echo "$(tail -n +2 /tmp/aur/packages)" > /tmp/aur/packages; }
 	sort <(comm -23 <(sort /tmp/aur/packages) <(pacman -Qq | sort)) <(comm -12 <(sort /tmp/aur/packages) <(pacman -Qq | sort) | awk '{print $0" \033[32m*\033[0m"}') > /tmp/aur_packages
 	echo "$(echo -e ' Select packages to install\n (use TAB to toggle selection)'; cat /tmp/aur_packages)" > /tmp/aur_packages
 	cat /tmp/aur_packages | fzf -q "$1" -e -m --preview  'cat <(yay -Si {1}) <(pacman -Ql {1} 2>/dev/null | awk "{print \$2}")' --preview-window=65%:wrap --layout=reverse --marker='>>' --header-lines=2 --info=hidden --ansi --margin="2%,1%,2%,1%" --cycle | sed -e 's/\*$//' | xargs -ro yay -S
