@@ -75,7 +75,7 @@ Aur() {
 AurInstalled() {
 	sort <(pacman -Qqm) > /tmp/aur_installed_packages
 	echo "$(echo -e ' Select packages to print info\n (use TAB to toggle selection)'; cat /tmp/aur_installed_packages)" > /tmp/aur_installed_packages
-	cat /tmp/aur_installed_packages |fzf -q "$1" -e -m --preview 'cat <(yay -Qi {1}) <(echo "") <(pacman -Ql {1} | awk "{print \$2}")' --preview-window=65%:wrap --layout=reverse --marker='>>' --header-lines=2 --info=hidden --ansi --margin="2%,1%,2%,1%" --cycle | xargs -ro pacman -Qik
+	cat /tmp/aur_installed_packages |fzf -q "$1" -e -m --preview 'cat <(pacman -Qik {1}) <(echo "") <(pacman -Ql {1} | awk "{print \$2}")' --preview-window=65%:wrap --layout=reverse --marker='>>' --header-lines=2 --info=hidden --ansi --margin="2%,1%,2%,1%" --cycle | xargs -ro pacman -Qik
 }
 
 ### ORPHANS
@@ -83,7 +83,7 @@ AurInstalled() {
 Orphans() {
 	sort <(pacman -Qtdq) > /tmp/orphaned
 	echo "$(echo -e ' Select packages to remove\n (use TAB to toggle selection)'; cat /tmp/orphaned)" > /tmp/orphaned
-	cat /tmp/orphaned |fzf -q "$1" -e -m --preview 'cat <(pacman -Si {1} 2>/dev/null || yay -Qi {1}) <(pacman -Ql {1} | awk "{print \$2}")' --preview-window=65%:wrap --layout=reverse --marker='>>' --header-lines=2 --info=hidden --ansi --margin="2%,1%,2%,1%" --cycle | xargs -ro sudo pacman -Rsn	
+	cat /tmp/orphaned |fzf -q "$1" -e -m --preview 'cat <(pacman -Qik {1} 2>/dev/null || yay -Qi {1}) <(pacman -Ql {1} | awk "{print \$2}")' --preview-window=65%:wrap --layout=reverse --marker='>>' --header-lines=2 --info=hidden --ansi --margin="2%,1%,2%,1%" --cycle | xargs -ro sudo pacman -Rsn	
 }
 
 ### MAIN
