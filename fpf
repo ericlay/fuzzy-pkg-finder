@@ -91,7 +91,7 @@ Orphans() {
 #	Update the files database
 UpdateInfos
 #   Test for AUR option, if not run with pacman
-if [[ ! "$1" =~ "-" ]]; then
+if [[ ! "$1" =~ "\\s-\\w" ]]; then
 	Official "$1"
 else
 	for opt in "$@"; do
