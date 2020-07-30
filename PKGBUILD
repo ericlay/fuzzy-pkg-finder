@@ -1,6 +1,6 @@
 # Maintainer: Eric Lay <ericlaytm@gmail.com>
 pkgname=fuzzy-pkg-finder
-pkgver=0.9.1
+pkgver=0.9.2
 pkgrel=1
 pkgdesc="Simple cli command for using fzf to search and install packages"
 arch=('x86_64' 'aarch64')
@@ -11,7 +11,7 @@ depends=('pacman'
     'fzf'
     'wget')
 makedepends=('git')
-source=("git+https://gitlab.com/airclay/fuzzy-pkg-finder.git")
+source=("git+https://gitlab.com/airclay/fuzzy-pkg-finder.git#tag=v$pkgver")
 md5sums=('SKIP')
 
 package() {
