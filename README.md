@@ -21,6 +21,10 @@ Usage:
 Syntax: fpf -[a|l|la|R|o|h]
 Defaults to Pacman if no options passed
 
+Searching for a package:
+ex: fpf [pkg name] for official repo search
+ex: fpf -a [pkg name] for aur search
+
 options:
 a     Search/List and install from AUR with Yay
 l     Search/List installed packages from official repo
