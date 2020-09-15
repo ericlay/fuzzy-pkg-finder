@@ -40,21 +40,55 @@ Official() {
 	echo "Setting things up..."
 	sort <(comm -23 <(pacman -Slq | sort) <(pacman -Qq | sort)) <(comm -12 <(pacman -Slq | sort) <(pacman -Qq | sort) | awk '{print $0" \033[32m*\033[0m"}') >  /tmp/packages
 	echo "$(echo -e ' Select packages to install\n (use TAB to toggle selection)'; cat /tmp/packages)" > /tmp/packages
-  	cat /tmp/packages |fzf -q "$1" -e -m --preview 'cat <(pacman -Si {1}) <(pacman -Fl {1} | awk "{print \$2}")' --preview-window=65%:wrap --layout=reverse --marker='>>' --header-lines=2 --info=hidden --ansi --margin="2%,1%,2%,1%" --cycle | sed -e 's/\*$//' | xargs -ro sudo pacman -S
+  	cat /tmp/packages |
+  	fzf -q "$1" -e -m \
+  	--preview='cat <(pacman -Si {1}) <(pacman -Fl {1} | awk "{print \$2}")' \
+  	--preview-window=65%:wrap \
+  	--layout=reverse \
+  	--marker='>>' \
+  	--header-lines=2 \
+  	--info=hidden \
+  	--ansi \
+  	--margin="2%,1%,2%,1%" \
+  	--cycle |
+  	sed -e 's/\*$//' |
+  	xargs -ro sudo pacman -S
 }
 
 #	List installed pkgs
 Installed() {
 	sort <(pacman -Qqs) > /tmp/installed_packages
 	echo "$(echo -e ' Select packages to print info\n (use TAB to toggle selection)'; cat /tmp/installed_packages)" > /tmp/installed_packages
-	cat /tmp/installed_packages |fzf -q "$1" -e -m --preview 'cat <(pacman -Qik {1}) <(echo "") <(pacman -Fl {1} | awk "{print \$2}")' --preview-window=65%:wrap --layout=reverse --marker='>>' --header-lines=2 --info=hidden --ansi --margin="2%,1%,2%,1%" --cycle | xargs -ro pacman -Qik
+	cat /tmp/installed_packages |
+	fzf -q "$1" -e -m \
+	--preview='cat <(pacman -Qik {1}) <(echo "") <(pacman -Fl {1} | awk "{print \$2}")' \
+	--preview-window=65%:wrap \
+	--layout=reverse \
+	--marker='>>' \
+	--header-lines=2 \
+	--info=hidden \
+	--ansi \
+	--margin="2%,1%,2%,1%" \
+	--cycle |
+	xargs -ro pacman -Qik
 }
 
 #	Remove installed pkgs
 Remove() {
 	sort <(pacman -Qqs) > /tmp/installed_packages
 	echo "$(echo -e ' Select packages to remove\n (use TAB to toggle selection)'; cat /tmp/installed_packages)" > /tmp/installed_packages
-	cat /tmp/installed_packages |fzf -q "$1" -e -m --preview 'cat <(pacman -Si {1} 2>/dev/null || yay -Qi {1}) <(pacman -Ql {1} | awk "{print \$2}")' --preview-window=65%:wrap --layout=reverse --marker='>>' --header-lines=2 --info=hidden --ansi --margin="2%,1%,2%,1%" --cycle | xargs -ro sudo pacman -Rsn
+	cat /tmp/installed_packages |
+	fzf -q "$1" -e -m \
+	--preview='cat <(pacman -Si {1} 2>/dev/null || yay -Qi {1}) <(pacman -Ql {1} | awk "{print \$2}")' \
+	--preview-window=65%:wrap \
+	--layout=reverse \
+	--marker='>>' \
+	--header-lines=2 \
+	--info=hidden \
+	--ansi \
+	--margin="2%,1%,2%,1%" \
+	--cycle |
+	xargs -ro sudo pacman -Rsn
 }
 
 ### AUR
@@ -68,8 +102,9 @@ Aur() {
 	[[ "${d2///-/}" > "${d1//-/}" ]] && { echo -e "Syncing AUR package database..."; wget -P /tmp/aur/ https://aur.archlinux.org/packages.gz >/dev/null 2>&1 && gunzip -f /tmp/aur/packages.gz; echo "$(tail -n +2 /tmp/aur/packages)" > /tmp/aur/packages; }
 	sort <(comm -23 <(sort /tmp/aur/packages) <(pacman -Qq | sort)) <(comm -12 <(sort /tmp/aur/packages) <(pacman -Qq | sort) | awk '{print $0" \033[32m*\033[0m"}') > /tmp/aur_packages
 	echo "$(echo -e ' Select packages to install\n (use TAB to toggle selection)'; cat /tmp/aur_packages)" > /tmp/aur_packages
-	cat /tmp/aur_packages | fzf -q "$1" -e -m \
-	--preview ='cat <(yay -Si {1}) <(pacman -Ql {1} 2>/dev/null | awk "{print \$2}")' \
+	cat /tmp/aur_packages |
+	fzf -q "$1" -e -m \
+	--preview='cat <(yay -Si {1}) <(pacman -Ql {1} 2>/dev/null | awk "{print \$2}")' \
 	--preview-window=65%:wrap \
 	--layout=reverse \
 	--marker='>>' \
@@ -78,7 +113,8 @@ Aur() {
 	--ansi \
 	--margin="2%,1%,2%,1%" \
 	--cycle \
-	--bind=ctrl-p:preview:'curl -s https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD\?h={1}' |
+	--bind=ctrl-p:preview:'curl --silent https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD\?h={1}' \
+	--bind=ctrl-x:preview:'cat <(yay -Si {1}) <(pacman -Ql {1} 2>/dev/null | awk "{print \$2}")' |
 	sed -e 's/\*$//' |
 	xargs -ro yay -S
 }
@@ -87,7 +123,20 @@ Aur() {
 AurInstalled() {
 	sort <(pacman -Qqm) > /tmp/aur_installed_packages
 	echo "$(echo -e ' Select packages to print info\n (use TAB to toggle selection)'; cat /tmp/aur_installed_packages)" > /tmp/aur_installed_packages
-	cat /tmp/aur_installed_packages |fzf -q "$1" -e -m --preview 'cat <(pacman -Qik {1}) <(echo "") <(pacman -Ql {1} | awk "{print \$2}")' --preview-window=65%:wrap --layout=reverse --marker='>>' --header-lines=2 --info=hidden --ansi --margin="2%,1%,2%,1%" --cycle | xargs -ro pacman -Qik
+	cat /tmp/aur_installed_packages |
+	fzf -q "$1" -e -m \
+	--preview 'cat <(pacman -Qik {1}) <(echo "") <(pacman -Ql {1} | awk "{print \$2}")' \
+	--preview-window=65%:wrap \
+	--layout=reverse \
+	--marker='>>' \
+	--header-lines=2 \
+	--info=hidden \
+	--ansi \
+	--margin="2%,1%,2%,1%" \
+	--cycle \
+	--bind=ctrl-p:preview:'curl --silent https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD\?h={1}' \
+	--bind=ctrl-x:preview:'cat <(pacman -Si {1} 2>/dev/null || yay -Qi {1}) <(pacman -Ql {1} | awk "{print \$2}")' |
+	xargs -ro pacman -Qik
 }
 
 ### ORPHANS
@@ -95,7 +144,18 @@ AurInstalled() {
 Orphans() {
 	sort <(pacman -Qtdq) > /tmp/orphaned
 	echo "$(echo -e ' Select packages to remove\n (use TAB to toggle selection)'; cat /tmp/orphaned)" > /tmp/orphaned
-	cat /tmp/orphaned |fzf -q "$1" -e -m --preview 'cat <(pacman -Qik {1} 2>/dev/null || yay -Qi {1}) <(pacman -Ql {1} | awk "{print \$2}")' --preview-window=65%:wrap --layout=reverse --marker='>>' --header-lines=2 --info=hidden --ansi --margin="2%,1%,2%,1%" --cycle | xargs -ro sudo pacman -Rsn	
+	cat /tmp/orphaned |
+	fzf -q "$1" -e -m \
+	--preview='cat <(pacman -Qik {1} 2>/dev/null || yay -Qi {1}) <(pacman -Ql {1} | awk "{print \$2}")' \
+	--preview-window=65%:wrap \
+	--layout=reverse \
+	--marker='>>' \
+	--header-lines=2 \
+	--info=hidden \
+	--ansi \
+	--margin="2%,1%,2%,1%" \
+	--cycle |
+	xargs -ro sudo pacman -Rsn	
 }
 
 ### MAIN
