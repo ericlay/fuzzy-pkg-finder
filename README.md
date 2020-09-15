@@ -37,6 +37,6 @@ h     Print this help screen.
 Keybinds:
 ```
 When browsing AUR or installed Aur pkgs:
-<kbd>ctrl</kbd>+<kbd>p</kbd> Will preview the highlighted pkgbuild file
-<kbd>ctrl</kbd>+<kbd>x</kbd> Will return to the highlighted pkg info
+'ctrl + p' Will preview the highlighted pkgbuild file
+'ctrl + x' Will return to the highlighted pkg info
 ```
