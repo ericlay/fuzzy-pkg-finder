@@ -1,4 +1,8 @@
- # Fuzzy-pkg-finder
+ <div align="right">
+    <img src="https://img.shields.io/static/v1?label=Language&message=shell&color=%235BB97E&style=flat-square"/>
+    <img src="https://img.shields.io/github/license/ericlay/fuzzy-pkg-finder?color=%235BB97E&label=LIC&style=flat-square"/>
+</div>
+ <div align="center"><h1>📦<br>Fuzzy-pkg-finder</h1></div>
 
 **Simple cli utility using fzf to search and install/list/remove packages.**\
  \
@@ -43,4 +47,4 @@ When browsing AUR or installed Aur pkgs:
  \
 *Fish shell users:* \
 Use alternate `fpff` command instead. (fuzzy-pkg-finder-fish)\
-Same script just adapted the bash-isms so the preview window will work. \
+Same script just adapted the bash-isms so the preview window will work.
