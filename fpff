@@ -22,7 +22,7 @@ Help() {
     echo
     echo "h     Print this help screen."
     echo
-    echo " Fish shell users should use \"fpff\" command instead"
+    echo " Bash/Zsh shell users should use \"fpf\" command instead"
 }
 
 ### Official Repo
@@ -43,7 +43,7 @@ Official() {
 	echo "$(echo -e ' Select packages to install\n (use TAB to toggle selection)'; cat /tmp/packages)" > /tmp/packages
   	cat /tmp/packages |
   	fzf -q "$1" -e -m \
-  	--preview='cat <(pacman -Si {1}) <(pacman -Fl {1} | awk "{print \$2}")' \
+  	--preview='cat (pacman -Si {1} | psub) (pacman -Fl {1} | awk "{print \$2}" | psub)' \
   	--preview-window=65%:wrap \
   	--layout=reverse \
   	--marker='>>' \
@@ -62,7 +62,7 @@ Installed() {
 	echo "$(echo -e ' Select packages to print info\n (use TAB to toggle selection)'; cat /tmp/installed_packages)" > /tmp/installed_packages
 	cat /tmp/installed_packages |
 	fzf -q "$1" -e -m \
-	--preview='cat <(pacman -Qik {1}) <(echo "") <(pacman -Fl {1} | awk "{print \$2}")' \
+	--preview='cat (pacman -Qik {1} | psub) (echo "" | psub) (pacman -Fl {1} | awk "{print \$2}" | psub)' \
 	--preview-window=65%:wrap \
 	--layout=reverse \
 	--marker='>>' \
@@ -80,7 +80,7 @@ Remove() {
 	echo "$(echo -e ' Select packages to remove\n (use TAB to toggle selection)'; cat /tmp/installed_packages)" > /tmp/installed_packages
 	cat /tmp/installed_packages |
 	fzf -q "$1" -e -m \
-	--preview='cat <(pacman -Si {1} 2>/dev/null || yay -Qi {1}) <(pacman -Ql {1} | awk "{print \$2}")' \
+	--preview='cat (pacman -Si {1} 2>/dev/null || yay -Qi {1} | psub) (pacman -Ql {1} | awk "{print \$2}" | psub)' \
 	--preview-window=65%:wrap \
 	--layout=reverse \
 	--marker='>>' \
@@ -105,7 +105,7 @@ Aur() {
 	echo "$(echo -e ' Select packages to install\n (use TAB to toggle selection)'; cat /tmp/aur_packages)" > /tmp/aur_packages
 	cat /tmp/aur_packages |
 	fzf -q "$1" -e -m \
-	--preview='cat <(yay -Si {1}) <(pacman -Ql {1} 2>/dev/null | awk "{print \$2}")' \
+	--preview='cat (yay -Si {1} | psub) (pacman -Ql {1} 2>/dev/null | awk "{print \$2}" | psub)' \
 	--preview-window=65%:wrap \
 	--layout=reverse \
 	--marker='>>' \
@@ -115,7 +115,7 @@ Aur() {
 	--margin="2%,1%,2%,1%" \
 	--cycle \
 	--bind=ctrl-p:preview:'curl --silent https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD\?h={1}' \
-	--bind=ctrl-x:preview:'cat <(yay -Si {1}) <(pacman -Ql {1} 2>/dev/null | awk "{print \$2}")' |
+	--bind=ctrl-x:preview:'cat (yay -Si {1} | psub) (pacman -Ql {1} 2>/dev/null | awk "{print \$2}" | psub)' |
 	sed -e 's/\*$//' |
 	xargs -ro yay -S
 }
@@ -126,7 +126,7 @@ AurInstalled() {
 	echo "$(echo -e ' Select packages to print info\n (use TAB to toggle selection)'; cat /tmp/aur_installed_packages)" > /tmp/aur_installed_packages
 	cat /tmp/aur_installed_packages |
 	fzf -q "$1" -e -m \
-	--preview 'cat <(pacman -Qik {1}) <(echo "") <(pacman -Ql {1} | awk "{print \$2}")' \
+	--preview 'cat (pacman -Qik {1} | psub) (echo "" | psub) (pacman -Ql {1} | awk "{print \$2}" | psub)' \
 	--preview-window=65%:wrap \
 	--layout=reverse \
 	--marker='>>' \
@@ -136,7 +136,7 @@ AurInstalled() {
 	--margin="2%,1%,2%,1%" \
 	--cycle \
 	--bind=ctrl-p:preview:'curl --silent https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD\?h={1}' \
-	--bind=ctrl-x:preview:'cat <(pacman -Si {1} 2>/dev/null || yay -Qi {1}) <(pacman -Ql {1} | awk "{print \$2}")' |
+	--bind=ctrl-x:preview:'cat (pacman -Si {1} 2>/dev/null || yay -Qi {1} | psub) (pacman -Ql {1} | awk "{print \$2}" | psub)' |
 	xargs -ro pacman -Qik
 }
 
@@ -147,7 +147,7 @@ Orphans() {
 	echo "$(echo -e ' Select packages to remove\n (use TAB to toggle selection)'; cat /tmp/orphaned)" > /tmp/orphaned
 	cat /tmp/orphaned |
 	fzf -q "$1" -e -m \
-	--preview='cat <(pacman -Qik {1} 2>/dev/null || yay -Qi {1}) <(pacman -Ql {1} | awk "{print \$2}")' \
+	--preview='cat (pacman -Qik {1} 2>/dev/null || yay -Qi {1} | psub) (pacman -Ql {1} | awk "{print \$2}" | psub)' \
 	--preview-window=65%:wrap \
 	--layout=reverse \
 	--marker='>>' \

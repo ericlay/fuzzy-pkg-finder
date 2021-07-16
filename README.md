@@ -26,12 +26,12 @@ ex: fpf [pkg name] for official repo search
 ex: fpf -a [pkg name] for aur search
 
 options:
-a     Search/List and install from AUR with Yay
-l     Search/List installed packages from official repo
-la    Search/List installed packages from AUR 
-R     Search/List installed packages for removal
-o     Search/List orphaned packages for removal
-h     Print this help screen.
+-a     Search/List and install from AUR with Yay
+-l     Search/List installed packages from official repo
+-la    Search/List installed packages from AUR 
+-R     Search/List installed packages for removal
+-o     Search/List orphaned packages for removal
+-h     Print this help screen.
 ```
 \
 Keybinds:
@@ -40,3 +40,7 @@ When browsing AUR or installed Aur pkgs:
 'ctrl + p' Will preview the highlighted pkgbuild file
 'ctrl + x' Will return to the highlighted pkg info
 ```
+ \
+*Fish shell users:* \
+Use alternate `fpff` command instead. (fuzzy-pkg-finder-fish)\
+Same script just adapted the bash-isms so the preview window will work. \
