@@ -17,4 +17,5 @@ md5sums=('SKIP')
 package() {
 	cd "$srcdir/$pkgname"
 	install -Dm755 fpf -t "$pkgdir/usr/bin"
+    install -Dm755 fpff -t "$pkgdir/usr/bin"
 }
