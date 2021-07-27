@@ -11,9 +11,13 @@
 Leverages the power of fzf to search package names and presents complete package information in preview pane. \
 On selection will hand off to Pacman or Yay to complete transaction. \
   \
-*For use with Pacman or Yay package managers only.*\
+*For use with Pacman/Yay/Paru package managers only.*\
  \
-Installation: 
+Installation: \
+Arch and arch-based distros, it is available in the AUR. \
+`paru -S fuzzy-pkg-finder` or `yay -S fuzzy-pkg-finder` \
+ \
+Manual build and install: \
 ```
 git clone https://github.com/ericlay/fuzzy-pkg-finder
 cd fuzzy-pkg-finder

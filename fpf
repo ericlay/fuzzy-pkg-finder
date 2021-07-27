@@ -25,7 +25,6 @@ Help() {
     echo " Fish shell users should use \"fpff\" command instead"
 }
 
-### Official Repo
 #	Check things are up to date
 UpdateInfos() {
 	[ -f /var/lib/pacman/sync/core.files ] || { echo -e "Syncing files database"; sudo pacman -Fy; }
@@ -36,6 +35,23 @@ UpdateInfos() {
 	[[ "${d2///-/}" > "${d1//-/}" ]] && { echo -e "Files database is out of date\nSyncing now..."; sudo pacman -Fy; }
 }
 
+#	Check AUR helper
+AHELPR=""
+if [[ -z "$AHELPR" ]]
+then
+    if [[ -f /usr/bin/paru ]]
+    then 
+    	AHELPR="paru"
+    elif [[ -f /usr/bin/yay ]]
+    then
+    	AHELPR="yay"
+    else
+    	echo -e "Suitable AUR Helper not found.\nPlease install \"paru\" or \"yay\" to continue."
+		exit 1
+	fi
+fi
+
+### Official Repo
 #	Get Official package list, sort, mark installed, preview infos and finally hand off to pacman for install
 Official() {
 	echo "Setting things up..."
@@ -80,7 +96,7 @@ Remove() {
 	echo "$(echo -e ' Select packages to remove\n (use TAB to toggle selection)'; cat /tmp/installed_packages)" > /tmp/installed_packages
 	cat /tmp/installed_packages |
 	fzf -q "$1" -e -m \
-	--preview='cat <(pacman -Si {1} 2>/dev/null || yay -Qi {1}) <(pacman -Ql {1} | awk "{print \$2}")' \
+	--preview='cat <(pacman -Si {1} 2>/dev/null || yay -Qi {1} 2>/dev/null || paru -Qi {1}) <(pacman -Ql {1} | awk "{print \$2}")' \
 	--preview-window=65%:wrap \
 	--layout=reverse \
 	--marker='>>' \
@@ -105,7 +121,7 @@ Aur() {
 	echo "$(echo -e ' Select packages to install\n (use TAB to toggle selection)'; cat /tmp/aur_packages)" > /tmp/aur_packages
 	cat /tmp/aur_packages |
 	fzf -q "$1" -e -m \
-	--preview='cat <(yay -Si {1}) <(pacman -Ql {1} 2>/dev/null | awk "{print \$2}")' \
+	--preview='cat <(yay -Si {1} 2>/dev/null || paru -Si {1}) <(pacman -Ql {1} 2>/dev/null | awk "{print \$2}")' \
 	--preview-window=65%:wrap \
 	--layout=reverse \
 	--marker='>>' \
@@ -115,9 +131,9 @@ Aur() {
 	--margin="2%,1%,2%,1%" \
 	--cycle \
 	--bind=ctrl-p:preview:'curl --silent https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD\?h={1}' \
-	--bind=ctrl-x:preview:'cat <(yay -Si {1}) <(pacman -Ql {1} 2>/dev/null | awk "{print \$2}")' |
+	--bind=ctrl-x:preview:'cat <(yay -Si {1} 2>/dev/null || paru -Si {1}) <(pacman -Ql {1} 2>/dev/null | awk "{print \$2}")' |
 	sed -e 's/\*$//' |
-	xargs -ro yay -S
+	xargs -ro $AHELPR -S
 }
 
 #	List installed pkgs only from AUR
@@ -136,7 +152,7 @@ AurInstalled() {
 	--margin="2%,1%,2%,1%" \
 	--cycle \
 	--bind=ctrl-p:preview:'curl --silent https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD\?h={1}' \
-	--bind=ctrl-x:preview:'cat <(pacman -Si {1} 2>/dev/null || yay -Qi {1}) <(pacman -Ql {1} | awk "{print \$2}")' |
+	--bind=ctrl-x:preview:'cat <(pacman -Si {1} 2>/dev/null || yay -Qi {1} 2>/dev/null || paru -Qi {1}) <(pacman -Ql {1} | awk "{print \$2}")' |
 	xargs -ro pacman -Qik
 }
 
@@ -147,7 +163,7 @@ Orphans() {
 	echo "$(echo -e ' Select packages to remove\n (use TAB to toggle selection)'; cat /tmp/orphaned)" > /tmp/orphaned
 	cat /tmp/orphaned |
 	fzf -q "$1" -e -m \
-	--preview='cat <(pacman -Qik {1} 2>/dev/null || yay -Qi {1}) <(pacman -Ql {1} | awk "{print \$2}")' \
+	--preview='cat <(pacman -Qik {1} 2>/dev/null || yay -Qi {1} 2>/dev/null || paru -Qi {1}) <(pacman -Ql {1} | awk "{print \$2}")' \
 	--preview-window=65%:wrap \
 	--layout=reverse \
 	--marker='>>' \

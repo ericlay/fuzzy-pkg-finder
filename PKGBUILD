@@ -7,10 +7,11 @@ arch=('x86_64' 'aarch64' 'armv7h')
 url="https://github.com/ericlay/$pkgname"
 license=('GPL3')
 depends=('pacman'
-    'yay'
     'fzf'
     'wget')
 makedepends=('git')
+optdepends=('yay: AUR helper'
+			'paru: AUR helper')
 source=("git+https://gitlab.com/airclay/fuzzy-pkg-finder.git#tag=v$pkgver")
 md5sums=('SKIP')
 
