@@ -55,7 +55,7 @@ fi
 #	Get Official package list, sort, mark installed, preview infos and finally hand off to pacman for install
 Official() {
 	echo "Setting things up..."
-	sort <(comm -23 <(pacman -Slq | sort) <(pacman -Qq | sort)) <(comm -12 <(pacman -Slq | sort) <(pacman -Qq | sort) | awk '{print $0" \033[32m*\033[0m"}') >  /tmp/packages
+	expac -H M '%-20n\t%d' $(sort <(comm -23 <(pacman -Slq | sort) <(pacman -Qq | sort)) <(comm -12 <(pacman -Slq | sort) <(pacman -Qq | sort) | awk '{print $0" \033[32m*\033[0m"}')) &>/dev/null >  /tmp/packages
 	echo "$(echo -e ' Select packages to install\n (use TAB to toggle selection)'; cat /tmp/packages)" > /tmp/packages
   	cat /tmp/packages |
   	fzf -q "$1" -e -m \
