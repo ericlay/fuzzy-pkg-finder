@@ -1,5 +1,11 @@
 #!/usr/bin/bash
 
+declare -r esc=$'\033'
+declare -r c_reset="${esc}[0m"
+declare -r c_red="${esc}[31m"
+declare -r c_green="${esc}[32m"
+declare -r c_blue="${esc}[34m"
+
 ### Help 
 Help() {
     echo
@@ -54,21 +60,27 @@ fi
 ### Official Repo
 #	Get Official package list, sort, mark installed, preview infos and finally hand off to pacman for install
 Official() {
-	echo "Setting things up..."
-	expac -H M '%-20n\t%d' $(sort <(comm -23 <(pacman -Slq | sort) <(pacman -Qq | sort)) <(comm -12 <(pacman -Slq | sort) <(pacman -Qq | sort) | awk '{print $0" \033[32m*\033[0m"}')) &>/dev/null >  /tmp/packages
-	echo "$(echo -e ' Select packages to install\n (use TAB to toggle selection)'; cat /tmp/packages)" > /tmp/packages
-  	cat /tmp/packages |
   	fzf -q "$1" -e -m \
-  	--preview='cat <(pacman -Si {1}) <(pacman -Fl {1} | awk "{print \$2}")' \
-  	--preview-window=65%:wrap \
+  	--preview='cat <(pacman -Si {2}) <(pacman -Fl {2} | awk "{print \$2}")' \
+  	--preview-window=55%:wrap:border-sharp \
+  	--preview-label="| Package Information |" \
   	--layout=reverse \
   	--marker='>>' \
-  	--header-lines=2 \
+  	--header=" Select packages to install (use TAB to toggle selection)" \
   	--info=hidden \
   	--ansi \
   	--margin="2%,1%,2%,1%" \
-  	--cycle |
-  	sed -e 's/\*$//' |
+  	--cycle \
+	< <( sort -k2 <( pacman -Ss "$1" |
+	  gawk '{
+	  	getline descr;
+	  	sub(/ */,"", descr);
+	  	repo = blue "[" gensub(/\/.*/, "", 1) "]" reset;
+	  	name = green gensub(/.*\//, "", 1, $1) reset;
+	  	info = gensub(/[^ ]* /, "", 1);
+	  	print repo, name, info, descr;
+	  }' blue="$c_blue" green="$c_green" reset="$c_reset"
+	)) | cut -d' ' -f2 |
   	xargs -ro sudo pacman -S
 }
 
