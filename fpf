@@ -1,11 +1,5 @@
 #!/usr/bin/bash
 
-declare -r esc=$'\033'
-declare -r c_reset="${esc}[0m"
-declare -r c_red="${esc}[31m"
-declare -r c_green="${esc}[32m"
-declare -r c_blue="${esc}[34m"
-
 ### Help 
 Help() {
     echo
@@ -26,6 +20,8 @@ Help() {
     echo
     echo "o     Search/List orphaned packages for removal"
     echo
+	echo "u 	Update Aur package descriptions list"
+    echo
     echo "h     Print this help screen."
     echo
     echo " Fish shell users should use \"fpff\" command instead"
@@ -39,6 +35,23 @@ UpdateInfos() {
 	d1="${d1:0:10}"
 	d2="${d2:0:10}"
 	[[ "${d2///-/}" > "${d1//-/}" ]] && { echo -e "Files database is out of date\nSyncing now..."; sudo pacman -Fy; }
+}
+
+#	Build descriptions list for AUR packages
+AurList() {
+	echo -e "\n		Updating AUR package descriptions list\n 	   WARNING!	      CAUTION!  	  CUIDADO!\n 	Will take 5 to 10 minutes depending on your machine\n\n"
+	rm -f /tmp/aur/packages-descriptions-meta
+	zcat <(curl  https://aur.archlinux.org/packages-meta-ext-v1.json.gz) | jq --compact-output '.[] | {Name, Version, Description, Keywords, PackageBase, URL, Popularity, OutOfDate, Maintainer, FirstSubmitted, LastModified, Depends, MakeDepends, License}' | perl -pe 's/^\{\"|\"?,"(?![^:]+\])/\n/g' | perl -pe 's/\\(?=")|\"(?=:)|:\K\[?\"\[?\"?|\"?\]\}?$//gm' | perl -pe 's/\",\" ?/ /gm' | perl -pe 's/^([^:]+)(:)(.*)$/$1                    $2 $3/gm' | perl -pe 's/^.{16}\K +//gm' | perl -0777 -pe 's/\n+(?=Name)/\n\n\nRepository      : AUR\n/gm' > /tmp/aur/packages-extracted-meta
+	inputF="/tmp/aur/packages"
+	block() {
+		dataF="/tmp/aur/packages-extracted-meta"
+		endF="/tmp/aur/packages-descriptions-list"
+		pkgName="$1"
+		description="$(grep -A 2 $pkgName $dataF | grep -m 1 Description | awk -F"    :" '{print $2}')"
+		printf '%s\t%s\n' "$pkgName" "$description" >> "$endF"
+	}
+	export -f block
+	cat "$inputF" | parallel -j 250 block 
 }
 
 #	Check AUR helper
@@ -60,27 +73,22 @@ fi
 ### Official Repo
 #	Get Official package list, sort, mark installed, preview infos and finally hand off to pacman for install
 Official() {
+	echo "Setting things up..."
+	sort <(comm -23 <(expac -S '%-20n\t%d' | sort) <(expac '%-20n\t%d' | sort)) <(comm -12 <(expac -S '%-20n\t%d' | sort) <(expac '%-20n\t%d' | sort) | awk -F"\t" '{print $1"\033[32m*\033[0m  ", $2}') &>/dev/null  >  /tmp/packages
+	echo "$(echo -e ' Select packages to install\n (use TAB to toggle selection)'; cat /tmp/packages)" > /tmp/packages
+  	cat /tmp/packages |
   	fzf -q "$1" -e -m \
-  	--preview='cat <(pacman -Si {2}) <(pacman -Fl {2} | awk "{print \$2}")' \
+  	--preview='cat <(pacman -Si {1}) <(pacman -Fl {1} | awk "{print \$2}")' \
   	--preview-window=55%:wrap:border-sharp \
   	--preview-label="| Package Information |" \
   	--layout=reverse \
   	--marker='>>' \
-  	--header=" Select packages to install (use TAB to toggle selection)" \
+  	--header-lines=2 \
   	--info=hidden \
   	--ansi \
   	--margin="2%,1%,2%,1%" \
-  	--cycle \
-	< <( sort -k2 <( pacman -Ss "$1" |
-	  gawk '{
-	  	getline descr;
-	  	sub(/ */,"", descr);
-	  	repo = blue "[" gensub(/\/.*/, "", 1) "]" reset;
-	  	name = green gensub(/.*\//, "", 1, $1) reset;
-	  	info = gensub(/[^ ]* /, "", 1);
-	  	print repo, name, info, descr;
-	  }' blue="$c_blue" green="$c_green" reset="$c_reset"
-	)) | cut -d' ' -f2 |
+  	--cycle |
+  	sed -e 's/\*$//' |
   	xargs -ro sudo pacman -S
 }
 
@@ -124,14 +132,16 @@ Remove() {
 #	Get AUR package database, remove unwanted lines, sort, mark installed, preview infos and finally hand off to yay for install
 Aur() {
 	echo "Setting things up..."
-	[ -f /tmp/aur/packages ] || { echo -e "Syncing AUR package database..."; wget -P /tmp/aur/ https://aur.archlinux.org/packages.gz >/dev/null 2>&1 && gunzip -f /tmp/aur/packages.gz; echo "$(tail -n +2 /tmp/aur/packages)" > /tmp/aur/packages; }
-	d1=$(stat -c %y /tmp/aur/packages)
+	[ -f /tmp/aur/packages-extracted-meta ] || { echo -e "Syncing AUR package database...\nCAUTION: This WILL take possibly 5 to 30 minutes depending on your machine"; wget -P /tmp/aur/ https://aur.archlinux.org/packages.gz >/dev/null 2>&1 && gunzip -f /tmp/aur/packages.gz; echo "$(tail -n +2 /tmp/aur/packages)" > /tmp/aur/packages; AurList; }
+	d1=$(stat -c %y /tmp/aur/packages-extracted-meta)
 	d1="${d1:0:10}"
 	d2=$(date -I'date')
-	[[ "${d2///-/}" > "${d1//-/}" ]] && { echo -e "Syncing AUR package database..."; wget -P /tmp/aur/ https://aur.archlinux.org/packages.gz >/dev/null 2>&1 && gunzip -f /tmp/aur/packages.gz; echo "$(tail -n +2 /tmp/aur/packages)" > /tmp/aur/packages; }
-	sort <(comm -23 <(sort /tmp/aur/packages) <(pacman -Qq | sort)) <(comm -12 <(sort /tmp/aur/packages) <(pacman -Qq | sort) | awk '{print $0" \033[32m*\033[0m"}') > /tmp/aur_packages
-	echo "$(echo -e ' Select packages to install\n (use TAB to toggle selection)'; cat /tmp/aur_packages)" > /tmp/aur_packages
-	cat /tmp/aur_packages |
+#	[[ "${d2///-/}" > "${d1//-/}" ]] && { echo -e "Syncing AUR package database..."; wget -P /tmp/aur/ https://aur.archlinux.org/packages.gz >/dev/null 2>&1 && gunzip -f /tmp/aur/packages.gz; echo "$(tail -n +2 /tmp/aur/packages)" > /tmp/aur/packages; }
+	[[ "${d2///-/}" > "${d1//-/}" ]] && echo -e "Aur package info database out of date\nConsider updating (fpf -u)\nCAUTION: WILL take a long time\nConsider switching to a service unit" && sleep 1
+#	sort <(comm -23 <(sort /tmp/aur/packages) <(pacman -Qq | sort)) <(comm -12 <(sort /tmp/aur/packages) <(pacman -Qq | sort) | awk '{print $0" \033[32m*\033[0m"}') > /tmp/aur_packages
+	sort -o /tmp/aur/packages-descriptions-list{,}
+	echo "$(echo -e ' Select packages to install\n (use TAB to toggle selection)'; cat /tmp/aur/packages-descriptions-list)" > /tmp/aur/packages-descriptions-list
+	cat /tmp/aur/packages-descriptions-list |
 	fzf -q "$1" -e -m \
 	--preview='cat <(yay -Si {1} 2>/dev/null || paru -Si {1}) <(pacman -Ql {1} 2>/dev/null | awk "{print \$2}")' \
 	--preview-window=65%:wrap \
@@ -211,6 +221,9 @@ else
        			;;
        		-R|--remove)
        			Remove "$2"
+       			;;
+       		-u|--update)
+       			AurList
        			;;
     		-h|--help)
        			Help
