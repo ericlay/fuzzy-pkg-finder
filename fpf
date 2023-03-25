@@ -1,5 +1,9 @@
 #!/usr/bin/bash
 
+declare -r esc=$'\033'
+declare -r c_reset="${esc}[0m"
+declare -r c_red="${esc}[31m"
+
 ### Help 
 Help() {
     echo
@@ -39,7 +43,8 @@ UpdateInfos() {
 
 #	Build descriptions list for AUR packages
 AurList() {
-	echo -e "\n		Updating AUR package descriptions list\n 	   WARNING!	      CAUTION!  	  CUIDADO!\n 	Will take 5 to 10 minutes depending on your machine\n\n"
+	echo -e "\n\n	      Updating AUR package descriptions list"
+	echo -e ""$c_red" 	   WARNING!	      CAUTION!  	  CUIDADO!\n 	Will take 5 to 10 minutes depending on your machine\n\n "$c_reset""
 	rm -f /tmp/aur/packages-descriptions-meta
 	zcat <(curl  https://aur.archlinux.org/packages-meta-ext-v1.json.gz) | jq --compact-output '.[] | {Name, Version, Description, Keywords, PackageBase, URL, Popularity, OutOfDate, Maintainer, FirstSubmitted, LastModified, Depends, MakeDepends, License}' | perl -pe 's/^\{\"|\"?,"(?![^:]+\])/\n/g' | perl -pe 's/\\(?=")|\"(?=:)|:\K\[?\"\[?\"?|\"?\]\}?$//gm' | perl -pe 's/\",\" ?/ /gm' | perl -pe 's/^([^:]+)(:)(.*)$/$1                    $2 $3/gm' | perl -pe 's/^.{16}\K +//gm' | perl -0777 -pe 's/\n+(?=Name)/\n\n\nRepository      : AUR\n/gm' > /tmp/aur/packages-extracted-meta
 	inputF="/tmp/aur/packages"
