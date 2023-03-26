@@ -41,24 +41,6 @@ UpdateInfos() {
 	[[ "${d2///-/}" > "${d1//-/}" ]] && { echo -e "Files database is out of date\nSyncing now..."; sudo pacman -Fy; }
 }
 
-#	Build descriptions list for AUR packages
-AurList() {
-	echo -e "\n\n	      Updating AUR package descriptions list"
-	echo -e ""$c_red" 	   WARNING!	      CAUTION!  	  CUIDADO!\n 	Will take 5 to 10 minutes depending on your machine\n\n "$c_reset""
-	rm -f /tmp/aur/packages-descriptions-meta
-	zcat <(curl  https://aur.archlinux.org/packages-meta-ext-v1.json.gz) | jq --compact-output '.[] | {Name, Version, Description, Keywords, PackageBase, URL, Popularity, OutOfDate, Maintainer, FirstSubmitted, LastModified, Depends, MakeDepends, License}' | perl -pe 's/^\{\"|\"?,"(?![^:]+\])/\n/g' | perl -pe 's/\\(?=")|\"(?=:)|:\K\[?\"\[?\"?|\"?\]\}?$//gm' | perl -pe 's/\",\" ?/ /gm' | perl -pe 's/^([^:]+)(:)(.*)$/$1                    $2 $3/gm' | perl -pe 's/^.{16}\K +//gm' | perl -0777 -pe 's/\n+(?=Name)/\n\n\nRepository      : AUR\n/gm' > /tmp/aur/packages-extracted-meta
-	inputF="/tmp/aur/packages"
-	block() {
-		dataF="/tmp/aur/packages-extracted-meta"
-		endF="/tmp/aur/packages-descriptions-list"
-		pkgName="$1"
-		description="$(grep -A 2 $pkgName $dataF | grep -m 1 Description | awk -F"    :" '{print $2}')"
-		printf '%s\t%s\n' "$pkgName" "$description" >> "$endF"
-	}
-	export -f block
-	cat "$inputF" | parallel -j 250 block 
-}
-
 #	Check AUR helper
 AHELPR=""
 if [[ -z "$AHELPR" ]]
@@ -137,16 +119,23 @@ Remove() {
 #	Get AUR package database, remove unwanted lines, sort, mark installed, preview infos and finally hand off to yay for install
 Aur() {
 	echo "Setting things up..."
-	[ -f /tmp/aur/packages-extracted-meta ] || { echo -e "Syncing AUR package database...\nCAUTION: This WILL take possibly 5 to 30 minutes depending on your machine"; wget -P /tmp/aur/ https://aur.archlinux.org/packages.gz >/dev/null 2>&1 && gunzip -f /tmp/aur/packages.gz; echo "$(tail -n +2 /tmp/aur/packages)" > /tmp/aur/packages; AurList; }
-	d1=$(stat -c %y /tmp/aur/packages-extracted-meta)
+#	[ -f /tmp/aur/packages-meta ] || { echo -e "Syncing AUR package database..."; wget -P /tmp/aur/ https://aur.archlinux.org/packages.gz >/dev/null 2>&1 && gunzip -f /tmp/aur/packages.gz; echo "$(tail -n +2 /tmp/aur/packages)" > /tmp/aur/packages; AurList; }
+	[ -f /tmp/aur/packages-meta ] || { echo -e "Syncing AUR package database"; zcat <(curl  https://aur.archlinux.org/packages-meta-ext-v1.json.gz) |
+	jq --compact-output '.[] |
+	{ Name, Description } ' |
+	awk -F'"' -v OFS='\t\t' '{print $4, $8}'> /tmp/aur/packages-meta; }
+	d1=$(stat -c %y /tmp/aur/packages-meta)
 	d1="${d1:0:10}"
 	d2=$(date -I'date')
 #	[[ "${d2///-/}" > "${d1//-/}" ]] && { echo -e "Syncing AUR package database..."; wget -P /tmp/aur/ https://aur.archlinux.org/packages.gz >/dev/null 2>&1 && gunzip -f /tmp/aur/packages.gz; echo "$(tail -n +2 /tmp/aur/packages)" > /tmp/aur/packages; }
-	[[ "${d2///-/}" > "${d1//-/}" ]] && echo -e "Aur package info database out of date\nConsider updating (fpf -u)\nCAUTION: WILL take a long time\nConsider switching to a service unit" && sleep 1
+	[[ "${d2///-/}" > "${d1//-/}" ]] && { echo -e "Syncing AUR package database..."; zcat <(curl  https://aur.archlinux.org/packages-meta-ext-v1.json.gz) |
+	jq --compact-output '.[] |
+	{ Name, Description } ' |
+	awk -F'"' -v OFS='\t\t' '{print $4, $8}'> /tmp/aur/packages-meta; }
 #	sort <(comm -23 <(sort /tmp/aur/packages) <(pacman -Qq | sort)) <(comm -12 <(sort /tmp/aur/packages) <(pacman -Qq | sort) | awk '{print $0" \033[32m*\033[0m"}') > /tmp/aur_packages
-	sort -o /tmp/aur/packages-descriptions-list{,}
-	echo "$(echo -e ' Select packages to install\n (use TAB to toggle selection)'; cat /tmp/aur/packages-descriptions-list)" > /tmp/aur/packages-descriptions-list
-	cat /tmp/aur/packages-descriptions-list |
+	sort -o /tmp/aur/packages-meta{,}
+	echo "$(echo -e ' Select packages to install\n (use TAB to toggle selection)'; cat /tmp/aur/packages-meta)" > /tmp/aur/packages-meta
+	cat /tmp/aur/packages-meta |
 	fzf -q "$1" -e -m \
 	--preview='cat <(yay -Si {1} 2>/dev/null || paru -Si {1}) <(pacman -Ql {1} 2>/dev/null | awk "{print \$2}")' \
 	--preview-window=65%:wrap \
