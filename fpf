@@ -1,9 +1,5 @@
 #!/usr/bin/bash
 
-declare -r esc=$'\033'
-declare -r c_reset="${esc}[0m"
-declare -r c_red="${esc}[31m"
-
 ### Help 
 Help() {
     echo
@@ -24,8 +20,6 @@ Help() {
     echo
     echo "o     Search/List orphaned packages for removal"
     echo
-	echo "u 	Update Aur package descriptions list"
-    echo
     echo "h     Print this help screen."
     echo
     echo " Fish shell users should use \"fpff\" command instead"
@@ -42,12 +36,15 @@ UpdateInfos() {
 }
 
 UpdateAurInfos() {
-	[ -f /tmp/aur/packages-meta ] || { echo -e "Syncing AUR package database..."; zcat <(curl  https://aur.archlinux.org/packages-meta-ext-v1.json.gz) |
+	echo -e "\nSyncing AUR package database...\n"
+	zcat <(curl  https://aur.archlinux.org/packages-meta-ext-v1.json.gz) |
 	jq --compact-output '.[] |
 	{ Name, Description } ' |
-	awk -F'"' '{ printf "%-20s %s\n", $4, $8}'> /tmp/aur/packages-meta; }
-#	sort <(comm -23 <(sort /tmp/aur/packages) <(pacman -Qq | sort)) <(comm -12 <(sort /tmp/aur/packages) <(pacman -Qq | sort) | awk '{print $0" \033[32m*\033[0m"}') > /tmp/aur_packages
-	sort -o /tmp/aur/packages-meta{,}
+	awk -F'"' '{ printf "%-20s\t%s\n", $4, $8}' > /tmp/aur/packages-meta
+	while IFS= read -r pkgName; do
+		grep -w "^$pkgName " /tmp/aur/packages-meta >> /tmp/aur/installed
+	done < <(pacman -Qqm)
+	sort <(comm -23 <(cat /tmp/aur/packages-meta | sort) <( cat /tmp/aur/installed | sort)) <(comm -12 <( cat /tmp/aur/packages-meta | sort) <(cat /tmp/aur/installed | sort) | awk -F"\t" '{print $1" \033[32m*\033[0m  ", $2}') -o /tmp/aur/packages-meta
 	echo "$(echo -e ' Select packages to install\n (use TAB to toggle selection)'; cat /tmp/aur/packages-meta)" > /tmp/aur/packages-meta
 }
 
