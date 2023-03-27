@@ -41,6 +41,16 @@ UpdateInfos() {
 	[[ "${d2///-/}" > "${d1//-/}" ]] && { echo -e "Files database is out of date\nSyncing now..."; sudo pacman -Fy; }
 }
 
+UpdateAurInfos() {
+	[ -f /tmp/aur/packages-meta ] || { echo -e "Syncing AUR package database..."; zcat <(curl  https://aur.archlinux.org/packages-meta-ext-v1.json.gz) |
+	jq --compact-output '.[] |
+	{ Name, Description } ' |
+	awk -F'"' '{ printf "%-20s %s\n", $4, $8}'> /tmp/aur/packages-meta; }
+#	sort <(comm -23 <(sort /tmp/aur/packages) <(pacman -Qq | sort)) <(comm -12 <(sort /tmp/aur/packages) <(pacman -Qq | sort) | awk '{print $0" \033[32m*\033[0m"}') > /tmp/aur_packages
+	sort -o /tmp/aur/packages-meta{,}
+	echo "$(echo -e ' Select packages to install\n (use TAB to toggle selection)'; cat /tmp/aur/packages-meta)" > /tmp/aur/packages-meta
+}
+
 #	Check AUR helper
 AHELPR=""
 if [[ -z "$AHELPR" ]]
@@ -120,22 +130,11 @@ Remove() {
 #	Get AUR package database, remove unwanted lines, sort, mark installed, preview infos and finally hand off to yay for install
 Aur() {
 	echo "Setting things up..."
-#	[ -f /tmp/aur/packages-meta ] || { echo -e "Syncing AUR package database..."; wget -P /tmp/aur/ https://aur.archlinux.org/packages.gz >/dev/null 2>&1 && gunzip -f /tmp/aur/packages.gz; echo "$(tail -n +2 /tmp/aur/packages)" > /tmp/aur/packages; AurList; }
-	[ -f /tmp/aur/packages-meta ] || { echo -e "Syncing AUR package database"; zcat <(curl  https://aur.archlinux.org/packages-meta-ext-v1.json.gz) |
-	jq --compact-output '.[] |
-	{ Name, Description } ' |
-	awk -F'"' -v OFS='\t\t' '{print $4, $8}'> /tmp/aur/packages-meta; }
+	[ -f /tmp/aur/packages-meta ] || UpdateAurInfos
 	d1=$(stat -c %y /tmp/aur/packages-meta)
 	d1="${d1:0:10}"
 	d2=$(date -I'date')
-#	[[ "${d2///-/}" > "${d1//-/}" ]] && { echo -e "Syncing AUR package database..."; wget -P /tmp/aur/ https://aur.archlinux.org/packages.gz >/dev/null 2>&1 && gunzip -f /tmp/aur/packages.gz; echo "$(tail -n +2 /tmp/aur/packages)" > /tmp/aur/packages; }
-	[[ "${d2///-/}" > "${d1//-/}" ]] && { echo -e "Syncing AUR package database..."; zcat <(curl  https://aur.archlinux.org/packages-meta-ext-v1.json.gz) |
-	jq --compact-output '.[] |
-	{ Name, Description } ' |
-	awk -F'"' -v OFS='\t\t' '{print $4, $8}'> /tmp/aur/packages-meta; }
-#	sort <(comm -23 <(sort /tmp/aur/packages) <(pacman -Qq | sort)) <(comm -12 <(sort /tmp/aur/packages) <(pacman -Qq | sort) | awk '{print $0" \033[32m*\033[0m"}') > /tmp/aur_packages
-	sort -o /tmp/aur/packages-meta{,}
-	echo "$(echo -e ' Select packages to install\n (use TAB to toggle selection)'; cat /tmp/aur/packages-meta)" > /tmp/aur/packages-meta
+	[[ "${d2///-/}" > "${d1//-/}" ]] && UpdateAurInfos	
 	cat /tmp/aur/packages-meta |
 	fzf -q "$1" -e -m \
 	--preview='cat <(yay -Si {1} 2>/dev/null || paru -Si {1}) <(pacman -Ql {1} 2>/dev/null | awk "{print \$2}")' \
@@ -217,9 +216,6 @@ else
        			;;
        		-R|--remove)
        			Remove "$2"
-       			;;
-       		-u|--update)
-       			AurList
        			;;
     		-h|--help)
        			Help
