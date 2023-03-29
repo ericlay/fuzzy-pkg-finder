@@ -1,7 +1,7 @@
 # Maintainer: Eric Lay <ericlaytm@gmail.com>
 # Contributor: Yochananmarqos
 pkgname=fuzzy-pkg-finder
-pkgver=0.9.9
+pkgver=1.0
 pkgrel=1
 pkgdesc="Simple cli command for using fzf to search and install packages"
 arch=('x86_64' 'aarch64' 'armv7h')

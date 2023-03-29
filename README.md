@@ -8,7 +8,7 @@
  \
 ![Screenshot](https://gitlab.com/airclay/fuzzy-pkg-finder/-/raw/master/fpf.png) \
  \
-Leverages the power of fzf to search package names and presents complete package information in preview pane. \
+Leverages the power of fzf to search package names and descriptions then presents complete package information in preview pane. \
 On selection will hand off to Pacman or Paru/Yay to complete transaction. \
   \
 *For use with Pacman/Yay/Paru package managers only.*\
@@ -26,20 +26,32 @@ makepkg -sric
  \
 Usage: 
 ```
-Syntax: fpf -[a|l|la|R|o|h]
+Syntax: fpf [-a| --aur] [-l| --list-installed] [-la| --list-aur-installed]
+              [R| --remove] [-o| --orphans] [-h | --help]
 Defaults to Pacman if no options passed
 
 Searching for a package:
 ex: fpf [pkg name] for official repo search
 ex: fpf -a [pkg name] for aur search
 
-options:
--a     Search/List and install from AUR with Yay
--l     Search/List installed packages from official repo
--la    Search/List installed packages from AUR 
--R     Search/List installed packages for removal
--o     Search/List orphaned packages for removal
--h     Print this help screen.
+Options:
+-a, --aur
+    Search/List and install from AUR with Yay
+
+-l, --list-installed
+    Search/List installed packages from official repo
+
+-la, --list-aur-installed
+    Search/List installed packages from AUR 
+
+-R, -remove
+     Search/List installed packages for removal
+
+-o, --orphans
+     Search/List orphaned packages for removal
+
+-h, --help
+     Print this help screen
 ```
 \
 Keybinds:
