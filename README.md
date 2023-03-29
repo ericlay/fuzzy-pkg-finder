@@ -48,7 +48,3 @@ When browsing AUR or installed Aur pkgs:
 'ctrl + p' Will preview the highlighted pkgbuild file
 'ctrl + x' Will return to the highlighted pkg info
 ```
- \
-*Fish shell users:* \
-Use alternate `fpff` command instead. (fuzzy-pkg-finder-fish)\
-Same script just adapted the bash-isms so the preview window will work.
