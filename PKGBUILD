@@ -16,7 +16,7 @@ depends=('pacman'
 makedepends=('git')
 optdepends=('yay: AUR helper'
 			'paru: AUR helper')
-source=("git+https://gitlab.com/airclay/fuzzy-pkg-finder.git#tag=v$pkgver")
+source=("git+https://github.com/ericlay/fuzzy-pkg-finder.git#tag=v$pkgver")
 md5sums=('SKIP')
 
 package() {
