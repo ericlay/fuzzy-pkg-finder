@@ -2,27 +2,17 @@
 
 ### Help 
 Help() {
-    echo
-    echo "Use fzf to search and install with Pacman and Yay"
-    echo "Defaults to Pacman if no options passed"
-    echo
-    echo "Syntax: fpf -[a|l|la|R|o|h]"
-    echo
-    echo "options:"
-    echo
-    echo "a     Search/List and install from AUR with Yay"
-    echo
-    echo "l     Search/List installed packages from official repo"
-    echo
-    echo "la    Search/List installed packages only from AUR repo"
-    echo
-    echo "R     Search/List installed packages for removal"
-    echo
-    echo "o     Search/List orphaned packages for removal"
-    echo
-    echo "h     Print this help screen."
-    echo
-    echo " Fish shell users should use \"fpff\" command instead"
+    echo -e "\nUse fzf to search and install with Pacman and Yay"
+    echo -e "Defaults to Pacman if no options passed\n"
+    echo -e "SYNTAX\n\tfpf [-a| --aur] [-l| --list-installed] [-la| --list-aur-installed]\n\t\t[R| --remove] [-o| --orphans] [-h | --help]\n"
+	echo -e "EXAMPLE\n\tfpf [pkg name] for official repo search\n\tfpf-a [pkg name] for aur search\n"
+	echo -e "OPTIONS"
+	echo -e "\t-a, --aur\n\t\tSearch/List and install from AUR with Yay\n"
+	echo -e "\t-l, --list-installed\n\t\tSearch/List installed packages from official repo\n"
+	echo -e "\t-la, --list-aur-installed\n\t\tSearch/List installed packages from AUR\n"
+	echo -e "\t-R, -remove\n\t\tSearch/List installed packages for removal\n"
+	echo -e "\t-o, --orphans\n\t\tSearch/List orphaned packages for removal\n"
+	echo -e "\t-h, --help\n\t\tPrint this help screen\n"
 }
 
 #	Check things are up to date
@@ -36,7 +26,8 @@ UpdateInfos() {
 }
 
 UpdateAurInfos() {
-	echo -e "\nSyncing AUR package database...\n"
+	echo -e "Syncing AUR package information..."
+	[[ ! -d /tmp/aur ]] && mkdir -p /tmp/aur
 	zcat <(curl  https://aur.archlinux.org/packages-meta-ext-v1.json.gz) |
 	jq --compact-output '.[] |
 	{ Name, Description } ' |
@@ -45,7 +36,6 @@ UpdateAurInfos() {
 		grep -w "^$pkgName " /tmp/aur/packages-meta >> /tmp/aur/installed
 	done < <(pacman -Qqm)
 	sort <(comm -23 <(cat /tmp/aur/packages-meta | sort) <( cat /tmp/aur/installed | sort)) <(comm -12 <( cat /tmp/aur/packages-meta | sort) <(cat /tmp/aur/installed | sort) | awk -F"\t" '{print $1" \033[32m*\033[0m  ", $2}') -o /tmp/aur/packages-meta
-	echo "$(echo -e ' Select packages to install\n (use TAB to toggle selection)'; cat /tmp/aur/packages-meta)" > /tmp/aur/packages-meta
 }
 
 #	Check AUR helper
@@ -69,7 +59,6 @@ fi
 Official() {
 	echo "Setting things up..."
 	sort <(comm -23 <(expac -S '%-20n\t%d' | sort) <(expac '%-20n\t%d' | sort)) <(comm -12 <(expac -S '%-20n\t%d' | sort) <(expac '%-20n\t%d' | sort) | awk -F"\t" '{print $1"\033[32m*\033[0m  ", $2}') &>/dev/null  >  /tmp/packages
-	echo "$(echo -e ' Select packages to install\n (use TAB to toggle selection)'; cat /tmp/packages)" > /tmp/packages
   	cat /tmp/packages |
   	fzf -q "$1" -e -m \
   	--preview='cat <(pacman -Si {1}) <(pacman -Fl {1} | awk "{print \$2}")' \
@@ -77,7 +66,7 @@ Official() {
   	--preview-label="| Package Information |" \
   	--layout=reverse \
   	--marker='>>' \
-  	--header-lines=2 \
+  	--header="$(echo -e ' Select packages to install\n (use TAB to toggle selection)\n')" \
   	--info=hidden \
   	--ansi \
   	--margin="2%,1%,2%,1%" \
@@ -126,19 +115,18 @@ Remove() {
 ### AUR
 #	Get AUR package database, remove unwanted lines, sort, mark installed, preview infos and finally hand off to yay for install
 Aur() {
-	echo "Setting things up..."
 	[ -f /tmp/aur/packages-meta ] || UpdateAurInfos
 	d1=$(stat -c %y /tmp/aur/packages-meta)
 	d1="${d1:0:10}"
 	d2=$(date -I'date')
-	[[ "${d2///-/}" > "${d1//-/}" ]] && UpdateAurInfos	
+	[[ "${d2///-/}" > "${d1//-/}" ]] && UpdateAurInfos		
 	cat /tmp/aur/packages-meta |
 	fzf -q "$1" -e -m \
 	--preview='cat <(yay -Si {1} 2>/dev/null || paru -Si {1}) <(pacman -Ql {1} 2>/dev/null | awk "{print \$2}")' \
-	--preview-window=65%:wrap \
+	--preview-window=55%:wrap:border-sharp \
 	--layout=reverse \
 	--marker='>>' \
-	--header-lines=2 \
+	--header="$(echo -e ' Select packages to install\n (use TAB to toggle selection)\n')" \
 	--info=hidden \
 	--ansi \
 	--margin="2%,1%,2%,1%" \
