@@ -63,14 +63,16 @@ Official() {
   	fzf -q "$1" -e -m \
   	--preview='cat <(pacman -Si {1}) <(pacman -Fl {1} | awk "{print \$2}")' \
   	--preview-window=55%:wrap:border-sharp \
-  	--preview-label="| Package Information |" \
   	--layout=reverse \
-  	--marker='>>' \
+  	--marker='✔ ' \
+  	--prompt=' ' \
+  	--pointer='󰧚 ' \
   	--header="$(echo -e ' Select packages to install\n (use TAB to toggle selection)\n')" \
   	--info=hidden \
   	--ansi \
   	--margin="2%,1%,2%,1%" \
   	--cycle \
+  	--bind 'focus:transform-preview-label:echo [ {1} ]' \
 	--tiebreak=begin,chunk,length |
   	awk '{print $1}' |
   	sed -e 's/\*$//' |
@@ -86,7 +88,7 @@ Installed() {
 	--preview='cat <(pacman -Qik {1}) <(echo "") <(pacman -Fl {1} | awk "{print \$2}")' \
 	--preview-window=65%:wrap \
 	--layout=reverse \
-	--marker='>>' \
+	--marker='✔ ' \
 	--header-lines=2 \
 	--info=hidden \
 	--ansi \
@@ -101,10 +103,10 @@ Remove() {
 	echo "$(echo -e ' Select packages to remove\n (use TAB to toggle selection)'; cat /tmp/installed_packages)" > /tmp/installed_packages
 	cat /tmp/installed_packages |
 	fzf -q "$1" -e -m \
-	--preview='cat <(pacman -Si {1} 2>/dev/null || yay -Qi {1} 2>/dev/null || paru -Qi {1}) <(pacman -Ql {1} | awk "{print \$2}")' \
+	--preview='bat <(pacman -Si {1} 2>/dev/null || yay -Qi {1} 2>/dev/null || paru -Qi {1}) <(pacman -Ql {1} | awk "{print \$2}")' \
 	--preview-window=65%:wrap \
 	--layout=reverse \
-	--marker='>>' \
+	--marker='✔ ' \
 	--header-lines=2 \
 	--info=hidden \
 	--ansi \
@@ -123,16 +125,19 @@ Aur() {
 	[[ "${d2///-/}" > "${d1//-/}" ]] && UpdateAurInfos		
 	cat /tmp/aur/packages-meta |
 	fzf -q "$1" -e -m \
-	--preview='cat <(yay -Si {1} 2>/dev/null || paru -Si {1}) <(pacman -Ql {1} 2>/dev/null | awk "{print \$2}")' \
+	--preview='bat <(yay -Si {1} 2>/dev/null || paru -Si {1}) <(pacman -Ql {1} 2>/dev/null | awk "{print \$2}")' \
 	--preview-window=55%:wrap:border-sharp \
 	--layout=reverse \
-	--marker='>>' \
+  	--marker='✔ ' \
+  	--prompt=' ' \
+  	--pointer='󰧚 ' \
 	--header="$(echo -e ' Select packages to install\n (use TAB to toggle selection)\n')" \
 	--info=hidden \
 	--ansi \
 	--margin="2%,1%,2%,1%" \
 	--cycle \
 	--tiebreak=begin,chunk,length \
+  	--bind 'focus:transform-preview-label:echo [ {1} ]' \
 	--bind=ctrl-p:preview:'curl --silent https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD\?h={1}' \
 	--bind=ctrl-x:preview:'cat <(yay -Si {1} 2>/dev/null || paru -Si {1}) <(pacman -Ql {1} 2>/dev/null | awk "{print \$2}")' |
 	awk '{print $1}' |
@@ -149,7 +154,7 @@ AurInstalled() {
 	--preview 'cat <(pacman -Qik {1}) <(echo "") <(pacman -Ql {1} | awk "{print \$2}")' \
 	--preview-window=65%:wrap \
 	--layout=reverse \
-	--marker='>>' \
+	--marker='✔ ' \
 	--header-lines=2 \
 	--info=hidden \
 	--ansi \
@@ -170,7 +175,7 @@ Orphans() {
 	--preview='cat <(pacman -Qik {1} 2>/dev/null || yay -Qi {1} 2>/dev/null || paru -Qi {1}) <(pacman -Ql {1} | awk "{print \$2}")' \
 	--preview-window=65%:wrap \
 	--layout=reverse \
-	--marker='>>' \
+	--marker='✔ ' \
 	--header-lines=2 \
 	--info=hidden \
 	--ansi \
