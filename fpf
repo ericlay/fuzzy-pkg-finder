@@ -58,7 +58,7 @@ fi
 #	Get Official package list, sort, mark installed, preview infos and finally hand off to pacman for install
 Official() {
 	echo "Setting things up..."
-	sort <(comm -23 <(expac -S '%-20n\t%d' | sort) <(expac '%-20n\t%d' | sort)) <(comm -12 <(expac -S '%-20n\t%d' | sort) <(expac '%-20n\t%d' | sort) | awk -F"\t" '{print $1"\033[32m*\033[0m  ", $2}') &>/dev/null  >  /tmp/packages
+	sort <(comm -23 <(expac -S '%-20n\t%d' | sort) <(expac '%-20n\t%d' | sort)) <(comm -12 <(expac -S '%-20n\t%d' | sort) <(expac '%-20n\t%d' | sort) | awk -F"\t" '{print $1"\033[36m*\033[0m  ", $2}') &>/dev/null  >  /tmp/packages
   	cat /tmp/packages |
   	fzf -q "$1" -e -m \
   	--preview='cat <(pacman -Si {1}) <(pacman -Fl {1} | awk "{print \$2}")' \
@@ -70,6 +70,7 @@ Official() {
   	--header="$(echo -e ' Select packages to install\n (use TAB to toggle selection)\n')" \
   	--info=hidden \
   	--ansi \
+  	--color='fg+:15,fg:42,preview-fg:123,preview-label:123,hl+:134,hl:123,query:134,gutter:0,border:134,prompt:15,pointer:15,marker:15,header:123' \
   	--margin="2%,1%,2%,1%" \
   	--cycle \
   	--bind 'focus:transform-preview-label:echo [ {1} ]' \
@@ -134,6 +135,7 @@ Aur() {
 	--header="$(echo -e ' Select packages to install\n (use TAB to toggle selection)\n')" \
 	--info=hidden \
 	--ansi \
+  	--color='fg+:15,fg:42,preview-fg:123,preview-label:123,hl+:134,hl:123,query:134,gutter:0,border:134,prompt:15,pointer:15,marker:15,header:123' \
 	--margin="2%,1%,2%,1%" \
 	--cycle \
 	--tiebreak=begin,chunk,length \
