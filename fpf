@@ -5,7 +5,7 @@ Help() {
     echo -e "\nUse fzf to search and install with Pacman and Yay"
     echo -e "Defaults to Pacman if no options passed\n"
     echo -e "SYNTAX\n\tfpf [-a| --aur] [-l| --list-installed] [-la| --list-aur-installed]\n\t\t[R| --remove] [-o| --orphans] [-h | --help]\n"
-	echo -e "EXAMPLE\n\tfpf [pkg name] for official repo search\n\tfpf-a [pkg name] for aur search\n"
+	echo -e "EXAMPLE\n\tfpf [pkg name] for official repo search\n\tfpf -a [pkg name] for aur search\n"
 	echo -e "OPTIONS"
 	echo -e "\t-a, --aur\n\t\tSearch/List and install from AUR with Yay\n"
 	echo -e "\t-l, --list-installed\n\t\tSearch/List installed packages from official repo\n"
@@ -13,6 +13,9 @@ Help() {
 	echo -e "\t-R, -remove\n\t\tSearch/List installed packages for removal\n"
 	echo -e "\t-o, --orphans\n\t\tSearch/List orphaned packages for removal\n"
 	echo -e "\t-h, --help\n\t\tPrint this help screen\n"
+	echo -e "KEYBINDS\n\tGLOBAL\n\t\tctrl-h\tShows this help text in preview window\n"
+	echo -e "\t\tctrl-x\tReturns preview window to default view\n"
+	echo -e "\tAUR\n\t\tctrl-x\tShows PKGBUILD in preview window"
 }
 
 #	Check things are up to date
@@ -69,6 +72,7 @@ Official() {
   	--pointer='󰧚 ' \
   	--header="$(echo -e ' Select packages to install\n (use TAB to toggle selection)\n')" \
   	--info=hidden \
+  	--no-scrollbar \
   	--ansi \
   	--color='fg+:15,fg:42,preview-fg:123,preview-label:123,hl+:134,hl:123,query:134,gutter:0,border:134,prompt:15,pointer:15,marker:15,header:123' \
   	--margin="2%,1%,2%,1%" \
@@ -134,12 +138,15 @@ Aur() {
   	--pointer='󰧚 ' \
 	--header="$(echo -e ' Select packages to install\n (use TAB to toggle selection)\n')" \
 	--info=hidden \
+  	--no-scrollbar \
 	--ansi \
   	--color='fg+:15,fg:42,preview-fg:123,preview-label:123,hl+:134,hl:123,query:134,gutter:0,border:134,prompt:15,pointer:15,marker:15,header:123' \
 	--margin="2%,1%,2%,1%" \
 	--cycle \
 	--tiebreak=begin,chunk,length \
   	--bind 'focus:transform-preview-label:echo [ {1} ]' \
+  	--bind=ctrl-h:preview:'/home/ez/Git/fuzzy-pkg-finder/fpf -h' \
+#  	--bind=ctrl-h:transform-preview-label:'echo [ Fuzzy-PKG-Finder ]' \
 	--bind=ctrl-p:preview:'curl --silent https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD\?h={1}' \
 	--bind=ctrl-x:preview:'cat <(yay -Si {1} 2>/dev/null || paru -Si {1}) <(pacman -Ql {1} 2>/dev/null | awk "{print \$2}")' |
 	awk '{print $1}' |
