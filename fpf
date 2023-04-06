@@ -12,10 +12,10 @@ Help() {
 	echo -e "\t-la, --list-aur-installed\n\t\tSearch/List installed packages from AUR\n"
 	echo -e "\t-R, -remove\n\t\tSearch/List installed packages for removal\n"
 	echo -e "\t-o, --orphans\n\t\tSearch/List orphaned packages for removal\n"
-	echo -e "\t-h, --help\n\t\tPrint this help screen\n"
-	echo -e "KEYBINDS\n\tGLOBAL\n\t\tctrl-h\tShows this help text in preview window\n"
-	echo -e "\t\tctrl-x\tReturns preview window to default view\n"
-	echo -e "\tAUR\n\t\tctrl-x\tShows PKGBUILD in preview window"
+	echo -e "\t-h, --help\n\t\tPrint this help screen"
+	echo -e "KEYBINDS"
+	echo -e "     GLOBAL\n\tctrl-h\tShows this help text in preview window\n\tctrl-r\tClears previously selected pkg's from list\n\tctrl-x\tReturns preview window to default view\n"
+	echo -e "     AUR\n\tctrl-p\tShows PKGBUILD in preview window\n"
 }
 
 #	Check things are up to date
@@ -65,7 +65,7 @@ Official() {
   	cat /tmp/packages |
   	fzf -q "$1" -e -m \
   	--preview='cat <(pacman -Si {1}) <(pacman -Fl {1} | awk "{print \$2}")' \
-  	--preview-window=55%:wrap:border-sharp \
+  	--preview-window=55%:wrap:border-rounded \
   	--layout=reverse \
   	--marker='✔ ' \
   	--prompt=' ' \
@@ -146,7 +146,7 @@ Aur() {
 	--tiebreak=begin,chunk,length \
   	--bind 'focus:transform-preview-label:echo [ {1} ]' \
   	--bind=ctrl-h:preview:'/home/ez/Git/fuzzy-pkg-finder/fpf -h' \
-#  	--bind=ctrl-h:transform-preview-label:'echo [ Fuzzy-PKG-Finder ]' \
+  	--bind=ctrl-r:clear-selection \
 	--bind=ctrl-p:preview:'curl --silent https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD\?h={1}' \
 	--bind=ctrl-x:preview:'cat <(yay -Si {1} 2>/dev/null || paru -Si {1}) <(pacman -Ql {1} 2>/dev/null | awk "{print \$2}")' |
 	awk '{print $1}' |
