@@ -35,9 +35,7 @@ UpdateAurInfos() {
 	jq --compact-output '.[] |
 	{ Name, Description } ' |
 	awk -F'"' '{ printf "%-20s\t%s\n", $4, $8}' > /tmp/aur/packages-meta
-	while IFS= read -r pkgName; do
-		grep -w "^$pkgName " /tmp/aur/packages-meta >> /tmp/aur/installed
-	done < <(pacman -Qqm)
+	parallel grep -w "^{} " /tmp/aur/packages-meta ">>" /tmp/aur/installed < <(pacman -Qqm)
 	sort <(comm -23 <(cat /tmp/aur/packages-meta | sort) <( cat /tmp/aur/installed | sort)) <(comm -12 <( cat /tmp/aur/packages-meta | sort) <(cat /tmp/aur/installed | sort) | awk -F"\t" '{print $1" \033[32m*\033[0m  ", $2}') -o /tmp/aur/packages-meta
 }
 
