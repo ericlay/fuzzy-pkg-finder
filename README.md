@@ -15,11 +15,11 @@ On selection will hand off to Pacman or Paru/Yay to complete transaction. \
  \
  There are countless fzf package manager wrappers out there, some much more built out that this.
  What separates Fuzzy-pkg-finder?
-- It's mine and it works the way I like it to \
-- It works as a simple script to wrap pacman/yay/paru, no need to rebuild the wheel \
-- Searches both package names and descriptions for keyword \
-- Hide preview window to see only packages and descriptions \
-- Shows files list and/or missing files for official repo or installed AUR packages \
+- It's mine and it works the way I like it to
+- It works as a simple script to wrap pacman/yay/paru, no need to rebuild the wheel
+- Searches both package names and descriptions for keyword
+- Hide preview window to see only packages and descriptions
+- Shows files list and/or missing files for official repo or installed AUR packages
 - Toggle between package info view and PKGBUILD view on AUR package preview \
  \
 Installation: \
