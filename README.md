@@ -22,6 +22,7 @@ On selection will hand off to Pacman or Paru/Yay to complete transaction. \
 - Shows files list and/or missing files for official repo or installed AUR packages
 - Toggle between package info view and PKGBUILD view on AUR package preview
  \
+ \
 Installation: \
 For Arch and arch-based distros, it is available in the AUR. \
 Use: `paru -S fuzzy-pkg-finder` or `yay -S fuzzy-pkg-finder` \
