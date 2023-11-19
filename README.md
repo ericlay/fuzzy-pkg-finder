@@ -13,6 +13,15 @@ On selection will hand off to Pacman or Paru/Yay to complete transaction. \
   \
 *For use with Pacman/Yay/Paru package managers only.*\
  \
+ There are countless fzf package manager wrappers out there, some much more built out that this.
+ What separates Fuzzy-pkg-finder?
+- It's mine and it works the way I like it to
+- It works as a simple script to wrap pacman/yay/paru, no need to rebuild the wheel
+- Searches both package names and descriptions for keyword
+- Hide preview window to see only packages and descriptions
+- Shows files list and/or missing files for official repo or installed AUR packages
+- Toggle between package info view and PKGBUILD view on AUR package preview
+ \
 Installation: \
 For Arch and arch-based distros, it is available in the AUR. \
 Use: `paru -S fuzzy-pkg-finder` or `yay -S fuzzy-pkg-finder` \
@@ -56,7 +65,13 @@ Options:
 \
 Keybinds:
 ```
+'ctrl + /' Toggle the preview window
+'ctrl + h' Show help in the preview window
+'ctrl + k' Show the keybinds in teh preview window
+'ctrl + n' Move to the next selected item
+'ctrl + b' Back to previoius selected item
+
 When browsing AUR or installed Aur pkgs:
-'ctrl + p' Will preview the highlighted pkgbuild file
-'ctrl + x' Will return to the highlighted pkg info
+'ctrl + p' Preview the highlighted pkgbuild file
+'ctrl + x' Return to the highlighted pkg info
 ```

@@ -2,40 +2,57 @@
 
 ### Help 
 Help() {
-    echo -e "\nUse fzf to search and install with Pacman and Yay"
-    echo -e "Defaults to Pacman if no options passed\n"
-    echo -e "SYNTAX\n\tfpf [-a| --aur] [-l| --list-installed] [-la| --list-aur-installed]\n\t\t[R| --remove] [-o| --orphans] [-h | --help]\n"
-	echo -e "EXAMPLE\n\tfpf [pkg name] for official repo search\n\tfpf-a [pkg name] for aur search\n"
-	echo -e "OPTIONS"
-	echo -e "\t-a, --aur\n\t\tSearch/List and install from AUR with Yay\n"
-	echo -e "\t-l, --list-installed\n\t\tSearch/List installed packages from official repo\n"
-	echo -e "\t-la, --list-aur-installed\n\t\tSearch/List installed packages from AUR\n"
-	echo -e "\t-R, -remove\n\t\tSearch/List installed packages for removal\n"
-	echo -e "\t-o, --orphans\n\t\tSearch/List orphaned packages for removal\n"
-	echo -e "\t-h, --help\n\t\tPrint this help screen\n"
+	helpF="/tmp/fpf-help"
+    { printf "\n%s\n" "Use fzf to search and install with Pacman or Yay/Paru"
+    printf "\n%s\n\t%s\n\t\t%s\n" "SYNTAX" \
+	"fpf [-a| --aur] [-l| --list-installed] [-la| --list-aur-installed]" "[R| --remove] [-o| --orphans] [-h | --help]" 
+	printf "\n%s\n\t%s\n\t\t%s\n\n\t%s\n\t\t%s\n" "EXAMPLE" "For official repo search:" \
+	"fpf [pkg name]" "For AUR search:" "fpf -a [pkg name]"
+	printf "\n%s\n" "OPTIONS"
+	printf "\t%s\n\\t\t%s\n\n" "-l, --list-installed" "Search/List installed packages from official repo"
+	printf "\t%s\n\\t\t%s\n\n" "-la, --list-aur-installed" "Search/List installed packages from AUR"
+	printf "\t%s\n\\t\t%s\n\n" "-a, --aur" "Search/List and install from AUR with Yay"
+	printf "\t%s\n\\t\t%s\n\n" "-R, -remove" "Search/List installed packages for removal"
+	printf "\t%s\n\\t\t%s\n\n" "-o, --orphans" "Search/List orphaned packages for removal"
+	printf "\t%s\n\\t\t%s\n\n" "-h, --help" "Print this help screen"; } > "$helpF"
+}
+
+KBINDS() {
+	kbindF="/tmp/fpf-kbinds"
+	{ printf "\n%s\n\n  %s\n" "Keybinds:" "GLOBAL"
+	printf "\t%s\t%s\n" "'ctrl + h'" "Show help in the preview window"
+	printf "\t%s\t%s\n" "'ctrl + k'" "Show the keybinds in the preview window" 
+	printf "\t%s\t%s\n" "'ctrl + /'" "Toggle the preview window" 
+	printf "\t%s\t%s\n" "'ctrl + n'" "Move to the next selected item"
+	printf "\t%s\t%s\n" "'ctrl + b'" "Back to previoius selected item"
+	printf "\n  %s\n" "AUR"
+	printf "\t%s\t%s\n" "'ctrl + p'" "Preview the highlighted pkgbuild file"
+	printf "\t%s\t%s\n" "'ctrl + x'" "Return to the highlighted pkg info"; } > "$kbindF"
 }
 
 #	Check things are up to date
 UpdateInfos() {
-	[ -f /var/lib/pacman/sync/core.files ] || { echo -e "Syncing files database"; sudo pacman -Fy; }
+	[ -f /var/lib/pacman/sync/core.files ] || { printf "Syncing files database"; sudo pacman -Fy; }
     d1=$(stat -c %y /var/lib/pacman/sync/core.files)
     d2=$(stat -c %y /var/lib/pacman/sync/core.db)
 	d1="${d1:0:10}"
 	d2="${d2:0:10}"
-	[[ "${d2///-/}" > "${d1//-/}" ]] && { echo -e "Files database is out of date\nSyncing now..."; sudo pacman -Fy; }
+	[[ "${d2///-/}" > "${d1//-/}" ]] && { printf "Files database is out of date\nSyncing now..."; sudo pacman -Fy; }
 }
 
 UpdateAurInfos() {
-	echo -e "Syncing AUR package information..."
+	printf "Syncing AUR package information..."
 	[[ ! -d /tmp/aur ]] && mkdir -p /tmp/aur
 	zcat <(curl  https://aur.archlinux.org/packages-meta-ext-v1.json.gz) |
 	jq --compact-output '.[] |
 	{ Name, Description } ' |
-	awk -F'"' '{ printf "%-20s\t%s\n", $4, $8}' > /tmp/aur/packages-meta
+	awk -F'"' '{ printf "%-20s\t%s\n", $4, $8}' > /tmp/aur/fpf-packages-meta
 	while IFS= read -r pkgName; do
-		grep -w "^$pkgName " /tmp/aur/packages-meta >> /tmp/aur/installed
+		grep -w "^$pkgName " /tmp/aur/fpf-packages-meta >> /tmp/aur/fpf-installed
 	done < <(pacman -Qqm)
-	sort <(comm -23 <(cat /tmp/aur/packages-meta | sort) <( cat /tmp/aur/installed | sort)) <(comm -12 <( cat /tmp/aur/packages-meta | sort) <(cat /tmp/aur/installed | sort) | awk -F"\t" '{print $1" \033[32m*\033[0m  ", $2}') -o /tmp/aur/packages-meta
+	sort <(comm -23 <(cat /tmp/aur/fpf-packages-meta | sort) <( cat /tmp/aur/fpf-installed | sort)) \
+	<(comm -12 <( cat /tmp/aur/fpf-packages-meta | sort) <(cat /tmp/aur/fpf-installed | sort) |
+	awk -F"\t" '{print $1" \033[32m*\033[0m  ", $2}') -o /tmp/aur/fpf-packages-meta
 }
 
 #	Check AUR helper
@@ -49,7 +66,7 @@ then
     then
     	AHELPR="yay"
     else
-    	echo -e "Suitable AUR Helper not found.\nPlease install \"paru\" or \"yay\" to continue."
+    	printf "Suitable AUR Helper not found.\nPlease install \"paru\" or \"yay\" to continue."
 		exit 1
 	fi
 fi
@@ -57,21 +74,27 @@ fi
 ### Official Repo
 #	Get Official package list, sort, mark installed, preview infos and finally hand off to pacman for install
 Official() {
-	echo "Setting things up..."
-	sort <(comm -23 <(expac -S '%-20n\t%d' | sort) <(expac '%-20n\t%d' | sort)) <(comm -12 <(expac -S '%-20n\t%d' | sort) <(expac '%-20n\t%d' | sort) | awk -F"\t" '{print $1"\033[32m*\033[0m  ", $2}') &>/dev/null  >  /tmp/packages
-  	cat /tmp/packages |
+	printf "Setting things up..."
+	KBINDS
+	sort <(comm -23 <(expac -S '%-20n\t%d' | sort) <(expac '%-20n\t%d' | sort)) <(comm -12 <(expac -S '%-20n\t%d' | sort) \
+	<(expac '%-20n\t%d' | sort) | awk -F"\t" '{print $1"\033[32m*\033[0m  ", $2}') &>/dev/null  >  /tmp/fpf-packages
+  	cat /tmp/fpf-packages |
   	fzf -q "$1" -e -m \
   	--preview='cat <(pacman -Si {1}) <(pacman -Fl {1} | awk "{print \$2}")' \
   	--preview-window=55%:wrap:border-sharp \
-  	--preview-label="| Package Information |" \
   	--layout=reverse \
   	--marker='>>' \
-  	--header="$(echo -e ' Select packages to install\n (use TAB to toggle selection)\n')" \
+  	--header="$(echo -e '\n Select packages to install\n (use TAB to toggle selection)\n\n')" \
   	--info=hidden \
   	--ansi \
   	--margin="2%,1%,2%,1%" \
   	--cycle \
-	--tiebreak=begin,chunk,length |
+	--tiebreak=begin,chunk,length \
+	--bind 'focus:transform-preview-label:echo ⌇ {1} ⌇' \
+	--bind=ctrl-k:preview:"cat /tmp/fpf-kbinds" \
+	--bind=ctrl-h:preview:"cat /tmp/fpf-help" \
+	--bind 'ctrl-/:change-preview-window(hidden|)' \
+	--bind ctrl-n:next-selected,ctrl-b:prev-selected |
   	awk '{print $1}' |
   	sed -e 's/\*$//' |
   	xargs -ro sudo pacman -S
@@ -79,9 +102,10 @@ Official() {
 
 #	List installed pkgs
 Installed() {
-	sort <(pacman -Qqs) > /tmp/installed_packages
-	echo "$(echo -e ' Select packages to print info\n (use TAB to toggle selection)'; cat /tmp/installed_packages)" > /tmp/installed_packages
-	cat /tmp/installed_packages |
+	sort <(pacman -Qqn) > /tmp/fpf-installed_packages
+	echo "$(echo -e ' Select packages to print info\n (use TAB to toggle selection)';
+	cat /tmp/fpf-installed_packages)" > /tmp/fpf-installed_packages
+	cat /tmp/fpf-installed_packages |
 	fzf -q "$1" -e -m \
 	--preview='cat <(pacman -Qik {1}) <(echo "") <(pacman -Fl {1} | awk "{print \$2}")' \
 	--preview-window=65%:wrap \
@@ -91,15 +115,21 @@ Installed() {
 	--info=hidden \
 	--ansi \
 	--margin="2%,1%,2%,1%" \
-	--cycle |
+	--cycle \
+	--bind 'focus:transform-preview-label:echo ⌇ {1} ⌇' \
+	--bind=ctrl-k:preview:"cat /tmp/fpf-kbinds" \
+	--bind=ctrl-h:preview:"cat /tmp/fpf-help" \
+	--bind 'ctrl-/:change-preview-window(hidden|)' \
+	--bind ctrl-n:next-selected,ctrl-b:prev-selected |
 	xargs -ro pacman -Qik
 }
 
 #	Remove installed pkgs
 Remove() {
-	sort <(pacman -Qqs) > /tmp/installed_packages
-	echo "$(echo -e ' Select packages to remove\n (use TAB to toggle selection)'; cat /tmp/installed_packages)" > /tmp/installed_packages
-	cat /tmp/installed_packages |
+	sort <(pacman -Qqs) > /tmp/fpf-installed_packages
+	echo "$(echo -e ' Select packages to remove\n (use TAB to toggle selection)';
+	cat /tmp/fpf-installed_packages)" > /tmp/fpf-installed_packages
+	cat /tmp/fpf-installed_packages |
 	fzf -q "$1" -e -m \
 	--preview='cat <(pacman -Si {1} 2>/dev/null || yay -Qi {1} 2>/dev/null || paru -Qi {1}) <(pacman -Ql {1} | awk "{print \$2}")' \
 	--preview-window=65%:wrap \
@@ -109,7 +139,12 @@ Remove() {
 	--info=hidden \
 	--ansi \
 	--margin="2%,1%,2%,1%" \
-	--cycle |
+	--cycle \
+	--bind 'focus:transform-preview-label:echo ⌇ {1} ⌇' \
+	--bind=ctrl-k:preview:"cat /tmp/fpf-kbinds" \
+	--bind=ctrl-h:preview:"cat /tmp/fpf-help" \
+	--bind 'ctrl-/:change-preview-window(hidden|)' \
+	--bind ctrl-n:next-selected,ctrl-b:prev-selected |
 	xargs -ro sudo pacman -Rsn
 }
 
@@ -117,11 +152,11 @@ Remove() {
 #	Get AUR package database, remove unwanted lines, sort, mark installed, preview infos and finally hand off to yay for install
 Aur() {
 	[ -f /tmp/aur/packages-meta ] || UpdateAurInfos
-	d1=$(stat -c %y /tmp/aur/packages-meta)
+	d1=$(stat -c %y /tmp/aur/fpf-packages-meta)
 	d1="${d1:0:10}"
 	d2=$(date -I'date')
 	[[ "${d2///-/}" > "${d1//-/}" ]] && UpdateAurInfos		
-	cat /tmp/aur/packages-meta |
+	cat /tmp/aur/fpf-packages-meta |
 	fzf -q "$1" -e -m \
 	--preview='cat <(yay -Si {1} 2>/dev/null || paru -Si {1}) <(pacman -Ql {1} 2>/dev/null | awk "{print \$2}")' \
 	--preview-window=55%:wrap:border-sharp \
@@ -133,6 +168,11 @@ Aur() {
 	--margin="2%,1%,2%,1%" \
 	--cycle \
 	--tiebreak=begin,chunk,length \
+	--bind 'focus:transform-preview-label:echo ⌇ {1} ⌇' \
+	--bind=ctrl-k:preview:"cat /tmp/fpf-kbinds" \
+	--bind=ctrl-h:preview:"cat /tmp/fpf-help" \
+	--bind ctrl-n:next-selected,ctrl-b:prev-selected \
+	--bind 'ctrl-/:change-preview-window(hidden|)' \
 	--bind=ctrl-p:preview:'curl --silent https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD\?h={1}' \
 	--bind=ctrl-x:preview:'cat <(yay -Si {1} 2>/dev/null || paru -Si {1}) <(pacman -Ql {1} 2>/dev/null | awk "{print \$2}")' |
 	awk '{print $1}' |
@@ -142,9 +182,10 @@ Aur() {
 
 #	List installed pkgs only from AUR
 AurInstalled() {
-	sort <(pacman -Qqm) > /tmp/aur_installed_packages
-	echo "$(echo -e ' Select packages to print info\n (use TAB to toggle selection)'; cat /tmp/aur_installed_packages)" > /tmp/aur_installed_packages
-	cat /tmp/aur_installed_packages |
+	sort <(pacman -Qqm) > /tmp/fpf-aur_installed_packages
+	echo "$(echo -e ' Select packages to print info\n (use TAB to toggle selection)';
+	cat /tmp/fpf-aur_installed_packages)" > /tmp/fpf-aur_installed_packages
+	cat /tmp/fpf-aur_installed_packages |
 	fzf -q "$1" -e -m \
 	--preview 'cat <(pacman -Qik {1}) <(echo "") <(pacman -Ql {1} | awk "{print \$2}")' \
 	--preview-window=65%:wrap \
@@ -155,19 +196,26 @@ AurInstalled() {
 	--ansi \
 	--margin="2%,1%,2%,1%" \
 	--cycle \
+	--bind 'focus:transform-preview-label:echo ⌇ {1} ⌇' \
+	--bind=ctrl-k:preview:"cat /tmp/fpf-kbinds" \
+	--bind=ctrl-h:preview:"cat /tmp/fpf-help" \
+	--bind 'ctrl-/:change-preview-window(hidden|)' \
+	--bind ctrl-n:next-selected,ctrl-b:prev-selected \
 	--bind=ctrl-p:preview:'curl --silent https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD\?h={1}' \
-	--bind=ctrl-x:preview:'cat <(pacman -Si {1} 2>/dev/null || yay -Qi {1} 2>/dev/null || paru -Qi {1}) <(pacman -Ql {1} | awk "{print \$2}")' |
+	--bind=ctrl-x:preview:'cat <(pacman -Si {1} 2>/dev/null || yay -Qi {1} 2>/dev/null ||
+	paru -Qi {1}) <(pacman -Ql {1} | awk "{print \$2}")' |
 	xargs -ro pacman -Qik
 }
 
 ### ORPHANS
 #	List orphaned packages and remove selected 
 Orphans() {
-	sort <(pacman -Qtdq) > /tmp/orphaned
-	echo "$(echo -e ' Select packages to remove\n (use TAB to toggle selection)'; cat /tmp/orphaned)" > /tmp/orphaned
-	cat /tmp/orphaned |
+	sort <(pacman -Qtdq) > /tmp/fpf-orphaned
+	echo "$(echo -e ' Select packages to remove\n (use TAB to toggle selection)'; cat /tmp/fpf-orphaned)" > /tmp/fpf-orphaned
+	cat /tmp/fpf-orphaned |
 	fzf -q "$1" -e -m \
-	--preview='cat <(pacman -Qik {1} 2>/dev/null || yay -Qi {1} 2>/dev/null || paru -Qi {1}) <(pacman -Ql {1} | awk "{print \$2}")' \
+	--preview='cat <(pacman -Qik {1} 2>/dev/null || yay -Qi {1} 2>/dev/null ||
+	paru -Qi {1}) <(pacman -Ql {1} | awk "{print \$2}")' \
 	--preview-window=65%:wrap \
 	--layout=reverse \
 	--marker='>>' \
@@ -175,7 +223,12 @@ Orphans() {
 	--info=hidden \
 	--ansi \
 	--margin="2%,1%,2%,1%" \
-	--cycle |
+	--cycle \
+	--bind 'focus:transform-preview-label:echo ⌇ {1} ⌇' \
+	--bind=ctrl-k:preview:"cat /tmp/fpf-kbinds" \
+	--bind=ctrl-h:preview:"cat /tmp/fpf-help" \
+	--bind ctrl-n:next-selected,ctrl-b:prev-selected \
+	--bind 'ctrl-/:change-preview-window(hidden|)'  |
 	xargs -ro sudo pacman -Rsn	
 }
 
@@ -206,10 +259,12 @@ else
        			;;
     		-h|--help)
        			Help
+				cat "/tmp/fpf-help"
        			;;       			
-    		-*) 
-       			echo "Invalid Usage"
-       			Help
+    		-*)
+				Help
+				sed -i "2s/.*/Invalid Usage/" /tmp/fpf-help
+				head -n 13 "/tmp/fpf-help"
        			;;
     	esac
 	done
