@@ -62,7 +62,7 @@ AurFD() {
 	d1="${d1:0:10}"
 	d2=$(date -I'date')
 	[[ "${d2///-/}" > "${d1//-/}" ]] && { 
-		printf "Syncing AUR package information..."; UpdateAurInfos; }
+	printf "Syncing AUR package information..."; UpdateAurInfos; }
 }
 
 #	Check AUR helper
@@ -166,11 +166,12 @@ Update() (
 		--ansi \
 		--margin="2%,1%,2%,1%" \
 		--cycle \
-		--bind 'focus:transform-preview-label:echo ⌇ https://gitlab.archlinux.org/archlinux/packaging/packages/{1}/-/commits/main ⌇' \
+		--bind 'focus:transform-preview-label:echo \
+		⌇ Commit History: https://gitlab.archlinux.org/archlinux/packaging/packages/{1}/-/commits/main ⌇' \
 		--bind=ctrl-k:preview:"cat /tmp/fpf-kbinds" \
 		--bind=ctrl-h:preview:"cat /tmp/fpf-help" \
 		--bind 'ctrl-/:change-preview-window(hidden|)' \
-		--bind ctrl-n:next-selected,ctrl-b:prev-selected < "/tmp/fpf-updates" > /dev/null
+		--bind ctrl-n:next-selected,ctrl-b:prev-selected < /tmp/fpf-updates > /dev/null
 		[[ "$(printf '\nWould you like to update? [y/N]> ' >&2; read; echo $REPLY)" == [Nn]* ]] \
   		&& printf "\nPlease update soon :(\n" || sudo pacman -Syu
 	}
@@ -235,6 +236,35 @@ AurInstalled() {
 	xargs -ro pacman -Qik
 }
 
+#	Update AUR installed pkgs
+UpdateAURpkgs() (
+	viewAURUpdates() {
+		fzf --preview='cat <(yay -Si {1} 2>/dev/null || paru -Si {1}) <(pacman -Ql {1} 2>/dev/null | awk "{print \$2}")' \
+		--preview-window=65%:wrap \
+		--layout=reverse \
+		--marker='>>' \
+  		--header="$(echo -e '\nPackages with updates available:\n\n')" \
+		--info=hidden \
+		--ansi \
+		--margin="2%,1%,2%,1%" \
+		--cycle \
+		--bind 'focus:transform-preview-label:echo ⌇ {1} ⌇' \
+		--bind=ctrl-k:preview:"cat /tmp/fpf-kbinds" \
+		--bind=ctrl-h:preview:"cat /tmp/fpf-help" \
+		--bind 'ctrl-/:change-preview-window(hidden|)' \
+		--bind=ctrl-p:preview:'curl --silent https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD\?h={1}' \
+		--bind=ctrl-x:preview:'cat <(pacman -Si {1} 2>/dev/null || yay -Qi {1} 2>/dev/null ||
+		paru -Qi {1}) <(pacman -Ql {1} | awk "{print \$2}")' < "/tmp/aur/fpf-updates" > /dev/null
+		[[ "$(printf '\nWould you like to update? [y/N]> ' >&2; read; echo $REPLY)" == [Nn]* ]] \
+  		&& printf "\nPlease update soon :(\n" || yay -a
+		rm /tmp/aur/fpf-updates
+	}
+	while true; do printf "Reading yay updates" & eval "$(yay -a > /tmp/aur/fpf-yay & sleep ${1:-3})"; break; done
+	touch "/tmp/aur/fpf-updates"; grep '^[0-9]' "/tmp/aur/fpf-yay" | cut -c 8- > "/tmp/aur/fpf-updates"
+	[ -s "/tmp/aur/fpf-updates" ] && viewAURUpdates ||
+	printf "\nThere are no available updates :)\n"
+)
+
 ### ORPHANS
 #	List orphaned packages and remove selected 
 Orphans() {
@@ -290,6 +320,9 @@ else
        			;;
 			-U|--update)
        			Update
+       			;;
+			-Ua|--update-aur)
+       			UpdateAURpkgs "$2"
        			;;
     		-h|--help)
        			Help
