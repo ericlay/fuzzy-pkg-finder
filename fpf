@@ -14,6 +14,7 @@ Help() {
 	printf "\t%s\n\\t\t%s\n\n" "-a, --aur" "Search/List and install from AUR with Yay"
 	printf "\t%s\n\\t\t%s\n\n" "-R, -remove" "Search/List installed packages for removal"
 	printf "\t%s\n\\t\t%s\n\n" "-o, --orphans" "Search/List orphaned packages for removal"
+	printf "\t%s\n\\t\t%s\n\n" "-U, --update" "Show packages with updates available"
 	printf "\t%s\n\\t\t%s\n\n" "-h, --help" "Print this help screen"; } > "$helpF"
 }
 
@@ -41,7 +42,6 @@ UpdateInfos() {
 }
 
 UpdateAurInfos() {
-	printf "Syncing AUR package information..."
 	[[ ! -d /tmp/aur ]] && mkdir -p /tmp/aur
 	zcat <(curl  https://aur.archlinux.org/packages-meta-ext-v1.json.gz) |
 	jq --compact-output '.[] |
@@ -53,6 +53,16 @@ UpdateAurInfos() {
 	sort <(comm -23 <(cat /tmp/aur/fpf-packages-meta | sort) <( cat /tmp/aur/fpf-installed | sort)) \
 	<(comm -12 <( cat /tmp/aur/fpf-packages-meta | sort) <(cat /tmp/aur/fpf-installed | sort) |
 	awk -F"\t" '{print $1" \033[32m*\033[0m  ", $2}') -o /tmp/aur/fpf-packages-meta
+}
+
+AurFD() {
+	[ -f /tmp/aur/packages-meta ] || 
+	printf "Syncing AUR package information..." && UpdateAurInfos
+	d1=$(stat -c %y /tmp/aur/fpf-packages-meta)
+	d1="${d1:0:10}"
+	d2=$(date -I'date')
+	[[ "${d2///-/}" > "${d1//-/}" ]] && { 
+		printf "Syncing AUR package information..."; UpdateAurInfos; }
 }
 
 #	Check AUR helper
@@ -71,14 +81,16 @@ then
 	fi
 fi
 
+#	Create the helper files
+Help
+KBINDS
+
 ### Official Repo
 #	Get Official package list, sort, mark installed, preview infos and finally hand off to pacman for install
 Official() {
 	printf "Setting things up..."
-	KBINDS
 	sort <(comm -23 <(expac -S '%-20n\t%d' | sort) <(expac '%-20n\t%d' | sort)) <(comm -12 <(expac -S '%-20n\t%d' | sort) \
 	<(expac '%-20n\t%d' | sort) | awk -F"\t" '{print $1"\033[32m*\033[0m  ", $2}') &>/dev/null  >  /tmp/fpf-packages
-  	cat /tmp/fpf-packages |
   	fzf -q "$1" -e -m \
   	--preview='cat <(pacman -Si {1}) <(pacman -Fl {1} | awk "{print \$2}")' \
   	--preview-window=55%:wrap:border-sharp \
@@ -94,7 +106,7 @@ Official() {
 	--bind=ctrl-k:preview:"cat /tmp/fpf-kbinds" \
 	--bind=ctrl-h:preview:"cat /tmp/fpf-help" \
 	--bind 'ctrl-/:change-preview-window(hidden|)' \
-	--bind ctrl-n:next-selected,ctrl-b:prev-selected |
+	--bind ctrl-n:next-selected,ctrl-b:prev-selected < /tmp/fpf-packages |
   	awk '{print $1}' |
   	sed -e 's/\*$//' |
   	xargs -ro sudo pacman -S
@@ -102,16 +114,13 @@ Official() {
 
 #	List installed pkgs
 Installed() {
-	sort <(pacman -Qqn) > /tmp/fpf-installed_packages
-	echo "$(echo -e ' Select packages to print info\n (use TAB to toggle selection)';
-	cat /tmp/fpf-installed_packages)" > /tmp/fpf-installed_packages
-	cat /tmp/fpf-installed_packages |
+	expac '%-20n\t%d' |
 	fzf -q "$1" -e -m \
 	--preview='cat <(pacman -Qik {1}) <(echo "") <(pacman -Fl {1} | awk "{print \$2}")' \
 	--preview-window=65%:wrap \
 	--layout=reverse \
 	--marker='>>' \
-	--header-lines=2 \
+	--header="$(echo -e '\n Select packages to print info\n (use TAB to toggle selection)\n\n')" \
 	--info=hidden \
 	--ansi \
 	--margin="2%,1%,2%,1%" \
@@ -126,16 +135,13 @@ Installed() {
 
 #	Remove installed pkgs
 Remove() {
-	sort <(pacman -Qqs) > /tmp/fpf-installed_packages
-	echo "$(echo -e ' Select packages to remove\n (use TAB to toggle selection)';
-	cat /tmp/fpf-installed_packages)" > /tmp/fpf-installed_packages
-	cat /tmp/fpf-installed_packages |
+	expac '%-20n\t%d' |
 	fzf -q "$1" -e -m \
 	--preview='cat <(pacman -Si {1} 2>/dev/null || yay -Qi {1} 2>/dev/null || paru -Qi {1}) <(pacman -Ql {1} | awk "{print \$2}")' \
 	--preview-window=65%:wrap \
 	--layout=reverse \
 	--marker='>>' \
-	--header-lines=2 \
+  	--header="$(echo -e '\n Select packages to remove\n (use TAB to toggle selection)\n\n')" \
 	--info=hidden \
 	--ansi \
 	--margin="2%,1%,2%,1%" \
@@ -148,15 +154,32 @@ Remove() {
 	xargs -ro sudo pacman -Rsn
 }
 
+#	Update installed pkgs
+Update() {
+	checkupdates |
+	fzf -q -e -m \
+  	--preview='cat <(pacman -Si {1}) <(pacman -Fl {1} | awk "{print \$2}")' \
+	--preview-window=65%:wrap \
+	--layout=reverse \
+	--marker='>>' \
+  	--header="$(echo -e '\nPackages with updates available:\n\n')" \
+	--info=hidden \
+	--ansi \
+	--margin="2%,1%,2%,1%" \
+	--cycle \
+	--bind 'focus:transform-preview-label:echo ⌇ https://gitlab.archlinux.org/archlinux/packaging/packages/{1}/-/commits/main ⌇' \
+	--bind=ctrl-k:preview:"cat /tmp/fpf-kbinds" \
+	--bind=ctrl-h:preview:"cat /tmp/fpf-help" \
+	--bind 'ctrl-/:change-preview-window(hidden|)' \
+	--bind ctrl-n:next-selected,ctrl-b:prev-selected
+	[[ "$(printf '\nWould you like to update? [y/N]> ' >&2; read; echo $REPLY)" == [Nn]* ]] \
+  	&& printf "\nPlease update soon\n" || sudo pacman -Syu
+}
+
 ### AUR
 #	Get AUR package database, remove unwanted lines, sort, mark installed, preview infos and finally hand off to yay for install
 Aur() {
-	[ -f /tmp/aur/packages-meta ] || UpdateAurInfos
-	d1=$(stat -c %y /tmp/aur/fpf-packages-meta)
-	d1="${d1:0:10}"
-	d2=$(date -I'date')
-	[[ "${d2///-/}" > "${d1//-/}" ]] && UpdateAurInfos		
-	cat /tmp/aur/fpf-packages-meta |
+	AurFD	
 	fzf -q "$1" -e -m \
 	--preview='cat <(yay -Si {1} 2>/dev/null || paru -Si {1}) <(pacman -Ql {1} 2>/dev/null | awk "{print \$2}")' \
 	--preview-window=55%:wrap:border-sharp \
@@ -174,7 +197,8 @@ Aur() {
 	--bind ctrl-n:next-selected,ctrl-b:prev-selected \
 	--bind 'ctrl-/:change-preview-window(hidden|)' \
 	--bind=ctrl-p:preview:'curl --silent https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD\?h={1}' \
-	--bind=ctrl-x:preview:'cat <(yay -Si {1} 2>/dev/null || paru -Si {1}) <(pacman -Ql {1} 2>/dev/null | awk "{print \$2}")' |
+	--bind=ctrl-x:preview:'cat <(yay -Si {1} 2>/dev/null || paru -Si {1}) <(pacman -Ql {1} 2>/dev/null | awk "{print \$2}")' \
+	< /tmp/aur/fpf-packages-meta |
 	awk '{print $1}' |
 	sed -e 's/\*$//' |
 	xargs -ro $AHELPR -S
@@ -182,16 +206,16 @@ Aur() {
 
 #	List installed pkgs only from AUR
 AurInstalled() {
-	sort <(pacman -Qqm) > /tmp/fpf-aur_installed_packages
-	echo "$(echo -e ' Select packages to print info\n (use TAB to toggle selection)';
-	cat /tmp/fpf-aur_installed_packages)" > /tmp/fpf-aur_installed_packages
-	cat /tmp/fpf-aur_installed_packages |
+	AurFD
+	while IFS= read -r pkgName; do
+	grep -w "^$pkgName " /tmp/aur/fpf-packages-meta >> /tmp/aur/fpf-installed
+	done < <(pacman -Qqm)
 	fzf -q "$1" -e -m \
 	--preview 'cat <(pacman -Qik {1}) <(echo "") <(pacman -Ql {1} | awk "{print \$2}")' \
 	--preview-window=65%:wrap \
 	--layout=reverse \
 	--marker='>>' \
-	--header-lines=2 \
+	--header="$(echo -e ' Select packages to print info\n (use TAB to toggle selection)\n')" \
 	--info=hidden \
 	--ansi \
 	--margin="2%,1%,2%,1%" \
@@ -203,23 +227,25 @@ AurInstalled() {
 	--bind ctrl-n:next-selected,ctrl-b:prev-selected \
 	--bind=ctrl-p:preview:'curl --silent https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD\?h={1}' \
 	--bind=ctrl-x:preview:'cat <(pacman -Si {1} 2>/dev/null || yay -Qi {1} 2>/dev/null ||
-	paru -Qi {1}) <(pacman -Ql {1} | awk "{print \$2}")' |
+	paru -Qi {1}) <(pacman -Ql {1} | awk "{print \$2}")' \
+	< /tmp/aur/fpf-installed |
 	xargs -ro pacman -Qik
 }
 
 ### ORPHANS
 #	List orphaned packages and remove selected 
 Orphans() {
-	sort <(pacman -Qtdq) > /tmp/fpf-orphaned
-	echo "$(echo -e ' Select packages to remove\n (use TAB to toggle selection)'; cat /tmp/fpf-orphaned)" > /tmp/fpf-orphaned
-	cat /tmp/fpf-orphaned |
+	[ -f /tmp/fpf-orphans ] ||
+	while IFS= read -r pkgName; do
+	expac '%-20n\t%d' "$pkgName" >> /tmp/fpf-orphans
+	done < <(pacman -Qtdq)
 	fzf -q "$1" -e -m \
 	--preview='cat <(pacman -Qik {1} 2>/dev/null || yay -Qi {1} 2>/dev/null ||
 	paru -Qi {1}) <(pacman -Ql {1} | awk "{print \$2}")' \
 	--preview-window=65%:wrap \
 	--layout=reverse \
 	--marker='>>' \
-	--header-lines=2 \
+	--header="$(echo -e ' Select packages to remove\n (use TAB to toggle selection)\n')" \
 	--info=hidden \
 	--ansi \
 	--margin="2%,1%,2%,1%" \
@@ -228,7 +254,9 @@ Orphans() {
 	--bind=ctrl-k:preview:"cat /tmp/fpf-kbinds" \
 	--bind=ctrl-h:preview:"cat /tmp/fpf-help" \
 	--bind ctrl-n:next-selected,ctrl-b:prev-selected \
-	--bind 'ctrl-/:change-preview-window(hidden|)'  |
+	--bind 'ctrl-/:change-preview-window(hidden|)' \
+	< /tmp/fpf-orphans |
+	awk '{print $1}' |
 	xargs -ro sudo pacman -Rsn	
 }
 
@@ -256,6 +284,9 @@ else
        			;;
        		-R|--remove)
        			Remove "$2"
+       			;;
+			-U|--update)
+       			Update
        			;;
     		-h|--help)
        			Help

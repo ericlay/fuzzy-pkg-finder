@@ -20,7 +20,8 @@ What separates Fuzzy-pkg-finder?
 - Searches both package names and descriptions for keyword
 - Hide preview window to see only packages and descriptions
 - Shows files list and/or missing files for official repo or installed AUR packages
-- Toggle between package info view and PKGBUILD view on AUR package preview \
+- Toggle between package info view and PKGBUILD view on AUR package preview
+- Update feature shows package information and link to recent commits \
  \
  \
 Installation: \
@@ -37,7 +38,7 @@ makepkg -sric
 Usage: 
 ```
 Syntax: fpf [-a| --aur] [-l| --list-installed] [-la| --list-aur-installed]
-              [R| --remove] [-o| --orphans] [-h | --help]
+              [R| --remove] [-o| --orphans] [-U | --update] [-h | --help]
 Defaults to Pacman if no options passed
 
 Searching for a package:
@@ -59,6 +60,9 @@ Options:
 
 -o, --orphans
      Search/List orphaned packages for removal
+
+-U, --update
+     Shows packages with updates available
 
 -h, --help
      Print this help screen
