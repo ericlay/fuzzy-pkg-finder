@@ -6,7 +6,7 @@
 
 **Simple cli utility using fzf to search and install/list/remove packages.**\
  \
-![Screenshot](https://gitlab.com/airclay/fuzzy-pkg-finder/-/raw/master/fpf.png) \
+![Screenshot](https://raw.githubusercontent.com/ericlay/fuzzy-pkg-finder/master/fpf.png) \
  \
 Leverages the power of fzf to search package names and descriptions then presents complete package information in preview pane. \
 On selection will hand off to Pacman or Paru/Yay to complete transaction. \
@@ -14,7 +14,6 @@ On selection will hand off to Pacman or Paru/Yay to complete transaction. \
 *For use with Pacman/Yay/Paru package managers only.*\
  \
 There are countless fzf package manager wrappers out there, some much more built out that this. \
- \
 What separates Fuzzy-pkg-finder?
 - It's mine and it works the way I like it to
 - It works as a simple script to wrap pacman/yay/paru, no need to rebuild the wheel
@@ -69,7 +68,7 @@ Keybinds:
 ```
 'ctrl + /' Toggle the preview window
 'ctrl + h' Show help in the preview window
-'ctrl + k' Show the keybinds in teh preview window
+'ctrl + k' Show the keybinds in the preview window
 'ctrl + n' Move to the next selected item
 'ctrl + b' Back to previoius selected item
 
