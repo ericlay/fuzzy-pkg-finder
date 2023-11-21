@@ -155,26 +155,29 @@ Remove() {
 }
 
 #	Update installed pkgs
-Update() {
-	checkupdates |
-	fzf -q -e -m \
-  	--preview='cat <(pacman -Si {1}) <(pacman -Fl {1} | awk "{print \$2}")' \
-	--preview-window=65%:wrap \
-	--layout=reverse \
-	--marker='>>' \
-  	--header="$(echo -e '\nPackages with updates available:\n\n')" \
-	--info=hidden \
-	--ansi \
-	--margin="2%,1%,2%,1%" \
-	--cycle \
-	--bind 'focus:transform-preview-label:echo ⌇ https://gitlab.archlinux.org/archlinux/packaging/packages/{1}/-/commits/main ⌇' \
-	--bind=ctrl-k:preview:"cat /tmp/fpf-kbinds" \
-	--bind=ctrl-h:preview:"cat /tmp/fpf-help" \
-	--bind 'ctrl-/:change-preview-window(hidden|)' \
-	--bind ctrl-n:next-selected,ctrl-b:prev-selected
-	[[ "$(printf '\nWould you like to update? [y/N]> ' >&2; read; echo $REPLY)" == [Nn]* ]] \
-  	&& printf "\nPlease update soon\n" || sudo pacman -Syu
-}
+Update() (
+	viewUpdates() {
+		fzf --preview='cat <(pacman -Si {1}) <(pacman -Fl {1} | awk "{print \$2}")' \
+		--preview-window=65%:wrap \
+		--layout=reverse \
+		--marker='>>' \
+  		--header="$(echo -e '\nPackages with updates available:\n\n')" \
+		--info=hidden \
+		--ansi \
+		--margin="2%,1%,2%,1%" \
+		--cycle \
+		--bind 'focus:transform-preview-label:echo ⌇ https://gitlab.archlinux.org/archlinux/packaging/packages/{1}/-/commits/main ⌇' \
+		--bind=ctrl-k:preview:"cat /tmp/fpf-kbinds" \
+		--bind=ctrl-h:preview:"cat /tmp/fpf-help" \
+		--bind 'ctrl-/:change-preview-window(hidden|)' \
+		--bind ctrl-n:next-selected,ctrl-b:prev-selected < "/tmp/fpf-updates" > /dev/null
+		[[ "$(printf '\nWould you like to update? [y/N]> ' >&2; read; echo $REPLY)" == [Nn]* ]] \
+  		&& printf "\nPlease update soon :(\n" || sudo pacman -Syu
+	}
+	checkupdates > "/tmp/fpf-updates"
+	[ -s "/tmp/fpf-updates" ] && viewUpdates ||
+	printf "\nThere are no available updates :)\n"
+)
 
 ### AUR
 #	Get AUR package database, remove unwanted lines, sort, mark installed, preview infos and finally hand off to yay for install
