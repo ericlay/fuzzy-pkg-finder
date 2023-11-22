@@ -67,14 +67,17 @@ AurFD() {
 
 #	Check AUR helper
 AHELPR=""
+AHELPRUPDATE=""
 if [[ -z "$AHELPR" ]]
 then
     if [[ -f /usr/bin/paru ]]
     then 
     	AHELPR="paru"
+		AHELPRUPDATE="paru -Sua"
     elif [[ -f /usr/bin/yay ]]
     then
     	AHELPR="yay"
+		AHELPRUPDATE="yay -a"
     else
     	printf "Suitable AUR Helper not found.\nPlease install \"paru\" or \"yay\" to continue."
 		exit 1
@@ -130,6 +133,7 @@ Installed() {
 	--bind=ctrl-h:preview:"cat /tmp/fpf-help" \
 	--bind 'ctrl-/:change-preview-window(hidden|)' \
 	--bind ctrl-n:next-selected,ctrl-b:prev-selected |
+	awk '{print $1}' |
 	xargs -ro pacman -Qik
 }
 
@@ -151,6 +155,7 @@ Remove() {
 	--bind=ctrl-h:preview:"cat /tmp/fpf-help" \
 	--bind 'ctrl-/:change-preview-window(hidden|)' \
 	--bind ctrl-n:next-selected,ctrl-b:prev-selected |
+	awk '{print $1}' |
 	xargs -ro sudo pacman -Rsn
 }
 
@@ -233,6 +238,7 @@ AurInstalled() {
 	--bind=ctrl-x:preview:'cat <(pacman -Si {1} 2>/dev/null || yay -Qi {1} 2>/dev/null ||
 	paru -Qi {1}) <(pacman -Ql {1} | awk "{print \$2}")' \
 	< /tmp/aur/fpf-installed |
+	awk '{print $1}' |
 	xargs -ro pacman -Qik
 }
 
@@ -256,10 +262,10 @@ UpdateAURpkgs() (
 		--bind=ctrl-x:preview:'cat <(pacman -Si {1} 2>/dev/null || yay -Qi {1} 2>/dev/null ||
 		paru -Qi {1}) <(pacman -Ql {1} | awk "{print \$2}")' < "/tmp/aur/fpf-updates" > /dev/null
 		[[ "$(printf '\nWould you like to update? [y/N]> ' >&2; read; echo $REPLY)" == [Nn]* ]] \
-  		&& printf "\nPlease update soon :(\n" || yay -a
+  		&& printf "\nPlease update soon :(\n" || $AHELPRUPDATE
 		rm /tmp/aur/fpf-updates
 	}
-	while true; do printf "Reading yay updates" & eval "$(yay -a > /tmp/aur/fpf-yay & sleep ${1:-3})"; break; done
+	while true; do printf "Reading updates" & eval "$(yay -a > /tmp/aur/fpf-yay & sleep ${1:-3})"; break; done
 	touch "/tmp/aur/fpf-updates"; grep '^[0-9]' "/tmp/aur/fpf-yay" | cut -c 8- > "/tmp/aur/fpf-updates"
 	[ -s "/tmp/aur/fpf-updates" ] && viewAURUpdates ||
 	printf "\nThere are no available updates :)\n"
