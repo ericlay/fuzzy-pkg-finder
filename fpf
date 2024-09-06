@@ -91,28 +91,45 @@ KBINDS
 ### Official Repo
 #	Get Official package list, sort, mark installed, preview infos and finally hand off to pacman for install
 Official() {
-	printf "Setting things up..."
-	sort <(comm -23 <(expac -S '%-20n\t%d' | sort) <(expac '%-20n\t%d' | sort)) <(comm -12 <(expac -S '%-20n\t%d' | sort) \
-	<(expac '%-20n\t%d' | sort) | awk -F"\t" '{print $1"\033[32m*\033[0m  ", $2}') &>/dev/null  >  /tmp/fpf-packages
-  	fzf -q "$1" -e -m \
-  	--preview='cat <(pacman -Si {1}) <(pacman -Fl {1} | awk "{print \$2}")' \
-  	--preview-window=55%:wrap:border-sharp \
-  	--layout=reverse \
-  	--marker='>>' \
-  	--header="$(echo -e '\n Select packages to install\n (use TAB to toggle selection)\n\n')" \
-  	--info=hidden \
-  	--ansi \
-  	--margin="2%,1%,2%,1%" \
-  	--cycle \
-	--tiebreak=begin,chunk,length \
-	--bind 'focus:transform-preview-label:echo ⌇ {1} ⌇' \
-	--bind=ctrl-k:preview:"cat /tmp/fpf-kbinds" \
-	--bind=ctrl-h:preview:"cat /tmp/fpf-help" \
-	--bind 'ctrl-/:change-preview-window(hidden|)' \
-	--bind ctrl-n:next-selected,ctrl-b:prev-selected < /tmp/fpf-packages |
-  	awk '{print $1}' |
-  	sed -e 's/\*$//' |
-  	xargs -ro sudo pacman -S
+    echo "Setting things up..."
+    KBINDS
+
+    # Detect current shell type (bash/zsh/fish)
+    if [ -n "$BASH_VERSION" ] || [ -n "$ZSH_VERSION" ]; then
+        # bash/zsh: Using standard process redirects
+        sort <(comm -23 <(expac -S '%-20n\t%d' | sort) <(expac '%-20n\t%d' | sort)) \
+             <(comm -12 <(expac -S '%-20n\t%d' | sort) <(expac '%-20n\t%d' | sort) | awk -F"\t" '{print $1"\033[32m*\033[0m  ", $2}') \
+        &>/dev/null > /tmp/fpf-packages
+    elif [ "$SHELL" = "/usr/bin/fish" ]; then
+        # fish:
+        tmp1=$(comm -23 <(expac -S '%-20n\t%d' | sort) <(expac '%-20n\t%d' | sort))
+	tmp2=$(comm -12 <(expac -S '%-20n\t%d' | sort) <(expac '%-20n\t%d' | sort) | awk -F"\t" '{print $1"\033[32m*\033[0m  ", $2}')
+        sort $tmp1 $tmp2 > /tmp/fpf-packages
+    else
+        echo "Shell no compatible"
+        return 1
+    fi
+
+    # Use fzf to select packages
+    cat /tmp/fpf-packages | fzf -q "$1" -e -m \
+        --preview='cat <(pacman -Si {1}) <(pacman -Fl {1} | awk "{print \$2}")' \
+        --preview-window=55%:wrap:border-sharp \
+        --layout=reverse \
+        --marker='>>' \
+        --header="$(echo -e '\n Select packages to install\n (use TAB to toggle selection)\n\n')" \
+        --info=hidden \
+        --ansi \
+        --margin="2%,1%,2%,1%" \
+        --cycle \
+        --tiebreak=begin,chunk,length \
+        --bind 'focus:transform-preview-label:echo ⌇ {1} ⌇' \
+        --bind=ctrl-k:preview:"cat /tmp/fpf-kbinds" \
+        --bind=ctrl-h:preview:"cat /tmp/fpf-help" \
+        --bind 'ctrl-/:change-preview-window(hidden|)' \
+        --bind ctrl-n:next-selected,ctrl-b:prev-selected | \
+        awk '{print $1}' | \
+        sed -e 's/\*$//' | \
+        xargs -ro sudo pacman -S
 }
 
 #	List installed pkgs
