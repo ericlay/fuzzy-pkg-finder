@@ -103,7 +103,7 @@ Official() {
     elif [ "$SHELL" = "/usr/bin/fish" ]; then
         # fish:
         tmp1=$(comm -23 <(expac -S '%-20n\t%d' | sort) <(expac '%-20n\t%d' | sort))
-	tmp2=$(comm -12 <(expac -S '%-20n\t%d' | sort) <(expac '%-20n\t%d' | sort) | awk -F"\t" '{print $1"\033[32m*\033[0m  ", $2}')
+		tmp2=$(comm -12 <(expac -S '%-20n\t%d' | sort) <(expac '%-20n\t%d' | sort) | awk -F"\t" '{print $1"\033[32m*\033[0m  ", $2}')
         sort $tmp1 $tmp2 > /tmp/fpf-packages
     else
         echo "Shell no compatible"
